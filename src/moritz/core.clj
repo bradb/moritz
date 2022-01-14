@@ -10,11 +10,39 @@
     (println (clojure.string/join " " row)))
   (println))
 
+(defn- move->piece
+  [m]
+  (let [c (first m)
+        c->p {\R :rook
+              \N :knight
+              \B :bishop
+              \Q :queen
+              \K :king
+              \r :rook
+              \n :knight
+              \b :bishop
+              \q :queen
+              \k :king
+              }]
+    (get c->p c :pawn)))
+
+(def move->map
+  [bs move]
+  (let [what ])
+  )
+
 (def rules
   (o/ruleset
     {::board-state
      [:what
-      [::board ::state board-state]]}))
+      [::board ::state board-state]]
+
+     ::game-move
+     [:what
+      [::game ::move move]
+      :then
+      (let [{:keys [what from to] (move->map move)}]
+        (o/insert! ))]}))
 
 (def *session
   (atom (reduce o/add-rule (o/->session) rules)))
@@ -43,10 +71,14 @@
   (swap! s
          (fn [session]
            (-> session
-               (o/insert ::board ::move m)))))
+               (o/insert ::game ::move m)
+               o/fire-rules))))
 
 (defn get-board [s]
-  (o/query-all s ::board ::state))
+  (-> @s
+      (o/query-all ::board-state)
+      first
+      :board-state))
 
 (comment
   (swap! *session
@@ -54,6 +86,13 @@
            (-> session
                (o/insert ::board ::state board)
                o/fire-rules)))
-  (o/query-all @*session ::board-state)
+
+  (let [go (fn [m]
+             (move *session m)
+             (-> *session get-board print-board))]
+    (go "e4"))
+
+  (get-board *session)
+  (print)
   (let [new-state (move *session "e4")]
     (board new-state)))
