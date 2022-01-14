@@ -1,6 +1,8 @@
 (ns moritz.core
   (:require [odoyle.rules :as o]))
 
+(def ^:private ^:const files 8)
+
 (defn- print-board
   [board]
   (println)
@@ -10,17 +12,12 @@
 
 (def rules
   (o/ruleset
-    {::print-board
+    {::board-state
      [:what
-      [::board ::state bs]
-      :then
-      (print-board bs)]
+      [::board ::state board-state]]}))
 
-     ::pawn-move
-     [:what
-      [::pawn at to]]}
-
-    ))
+(def *session
+  (atom (reduce o/add-rule (o/->session) rules)))
 
 (def ^:private board
   [\r \n \b \q \k \b \n \r
@@ -32,8 +29,6 @@
    \P \P \P \P \P \P \P \P
    \R \N \B \Q \K \B \N \R])
 
-(def ^:private ^:const files 8)
-
 (defn- prompt
   [msg]
   (print msg)
@@ -44,12 +39,21 @@
   (let [move (prompt "Your move ('q' to quit): ")]
     (println "your move is" move)))
 
-(def *session
-  (atom (reduce o/add-rule (o/->session) rules)))
+(defn move [s m]
+  (swap! s
+         (fn [session]
+           (-> session
+               (o/insert ::board ::move m)))))
+
+(defn get-board [s]
+  (o/query-all s ::board ::state))
 
 (comment
   (swap! *session
          (fn [session]
            (-> session
                (o/insert ::board ::state board)
-               o/fire-rules))))
+               o/fire-rules)))
+  (o/query-all @*session ::board-state)
+  (let [new-state (move *session "e4")]
+    (board new-state)))
