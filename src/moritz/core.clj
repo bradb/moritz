@@ -1,5 +1,6 @@
 (ns moritz.core
-  (:require [odoyle.rules :as o]))
+  (:require [odoyle.rules :as o]
+            [clojure.string :as str]))
 
 (def ^:private ^:const files 8)
 
@@ -22,14 +23,58 @@
               \n :knight
               \b :bishop
               \q :queen
-              \k :king
-              }]
+              \k :king}]
     (get c->p c :pawn)))
 
-(def move->map
+(defn- move->to
+  [m]
+  (let [what (move->piece m)]
+    (if (= what :pawn)
+      m
+      (subs m 1))))
+
+(defn- move->from
+  [player what to]
+  (case what
+    :pawn ()
+    (throw (Exception. (format "don't know what %s is" (name what))))))
+
+(defn move->map
   [bs move]
-  (let [what ])
+  (let [what (move->piece move)
+        from (move->from move)
+        to (move->to move)]
+    {:what what, :from from, :to to}))
+
+(defn- square->idx
+  [square]
+  (let [[file rank] (str/split square #"")
+        x (.indexOf "abcdefgh" file)
+        y (* 8 (- (Integer/parseInt rank) 1))]
+    (+ x y)))
+
+(defn- char->piece
+  [c]
+  (case (str/lower-case c)
+    "r" :rook
+    "n" :knight
+    "b" :bishop
+    "q" :queen
+    "k" :king
+    "p" :pawn
+    nil))
+
+(defn square->allowed-moves
+  [bs square]
+  (let [idx (square->idx square)
+        piece-char (nth bs idx)
+        piece (char->piece piece-char)]
+    piece)
   )
+
+(comment
+  (square->allowed-moves board "e2"))
+
 
 (def rules
   (o/ruleset
@@ -41,21 +86,21 @@
      [:what
       [::game ::move move]
       :then
-      (let [{:keys [what from to] (move->map move)}]
-        (o/insert! ))]}))
+      (let [{:keys [what from to]} (move->map move)]
+        (o/insert! ::move what [from to]))]}))
 
 (def *session
   (atom (reduce o/add-rule (o/->session) rules)))
 
 (def ^:private board
-  [\r \n \b \q \k \b \n \r
-   \p \p \p \p \p \p \p \p
-   \. \. \. \. \. \. \. \.
-   \. \. \. \. \. \. \. \.
-   \. \. \. \. \. \. \. \.
-   \. \. \. \. \. \. \. \.
+  [\R \N \B \Q \K \B \N \R
    \P \P \P \P \P \P \P \P
-   \R \N \B \Q \K \B \N \R])
+   \. \. \. \. \. \. \. \.
+   \. \. \. \. \. \. \. \.
+   \. \. \. \. \. \. \. \.
+   \. \. \. \. \. \. \. \.
+   \p \p \p \p \p \p \p \p
+   \r \n \b \q \k \b \n \r])
 
 (defn- prompt
   [msg]
