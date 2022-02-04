@@ -54,9 +54,7 @@
 
 (defn- square->piece
   [board sq]
-  ())
-
-
+  (get board (square->idx sq)))
 
 (def ^:private rules
   (o/ruleset
