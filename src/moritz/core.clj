@@ -80,7 +80,7 @@
      ::player-move
      [:what
       #_[::player ::turn player]
-      [::board ::state board]
+      [::board ::state board {:then false}]
       [::game ::move move]
       :then
       (let [[from _] (move->from-to move)
@@ -89,6 +89,18 @@
                         pawn ::pawn
                         ::invalid)]
         (o/insert! ::move move-type move))]
+
+     ;; for now...
+     ::allow-invalid
+     [:what
+      [::board ::state board {:then false}]
+      [::move ::invalid move]
+      :then
+      (let [[from to] (move->from-to move)
+            piece (square->piece board from)]
+        (o/insert! ::board ::state (-> board
+                                       (assoc (square->idx from) nil)
+                                       (assoc (square->idx to) piece))))]
 
      ::pawn-move
      [:what
@@ -123,7 +135,7 @@
               (o/insert ::white ::allow-castle? true)
               (o/insert ::black ::allow-castle? true)
               (o/insert ::board ::state board)
-              #_(o/insert ::game ::move "e2e4")
+              (o/insert ::game ::move "g1f3")
               o/fire-rules))
   (->
     (o/query-all @*session ::game)
