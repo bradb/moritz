@@ -7,6 +7,7 @@ TODO
 ====
 
 * legal moves:
+  - pawn
   - knight
   - rook
   - bishop
@@ -14,7 +15,6 @@ TODO
   - king
     - castle
     - no castle allowed
-  - pawn
-    - en passant
+  - en passant
   - promotion
 * implement UCI compliance
