@@ -4,8 +4,8 @@
 
 ;; TODO:
 ;; valid one space pawn move
-;; A* search to test target reachable
 ;; valid two space pawn move
+;; A* search to test target reachable
 ;; valid bishop move
 ;; valid rook move
 ;; valid queen move
@@ -16,7 +16,6 @@
 ;; valid castle queenside
 ;; recognise checkmate
 ;; recognise stalemate
-;; init from fen
 ;; prevent castling if not allowed
 ;; don't allow moving into check
 ;; debug logging
@@ -24,6 +23,7 @@
 ;; introduce bitboards?
 ;; threefold repetition
 ;; undo
+;; init from fen
 
 (def ^:private board
   ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
