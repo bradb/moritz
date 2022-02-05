@@ -3,7 +3,6 @@
             [clojure.string :as str]))
 
 ;; TODO:
-;; make any move, no validation
 ;; ensure correct player moves
 ;; store moves
 ;; store board history
@@ -77,18 +76,37 @@
       [::black ::allow-castle? b-allow-castle?]
       [::board ::state board]]
 
+
+     ::move-history
+     [:what
+      [::player ::turn player {:then false}]
+      [::board ::state board {:then false}]
+      [::game ::moved move]]
+
+     ::end-turn
+     [:what
+      [::game ::start started?]
+      [::player ::turn player {:then false}]
+      [::game ::moved move]
+      :then
+      (when started?
+        (o/insert! ::player ::turn (if (= player white)
+                                     black
+                                     white)))]
+
      ::player-move
      [:what
-      #_[::player ::turn player]
+      [::player ::turn player]
       [::board ::state board {:then false}]
       [::game ::move move]
       :then
       (let [[from _] (move->from-to move)
-            [_ piece] (square->piece board from)
-            move-type (condp = piece
-                        pawn ::pawn
-                        ::invalid)]
-        (o/insert! ::move move-type move))]
+            [color piece] (square->piece board from)]
+        (when (= color player)
+          (let [move-type (condp = piece
+                            pawn ::pawn
+                            ::invalid)]
+            (o/insert! ::move move-type move))))]
 
      ;; for now...
      ::allow-invalid
@@ -100,7 +118,8 @@
             piece (square->piece board from)]
         (o/insert! ::board ::state (-> board
                                        (assoc (square->idx from) nil)
-                                       (assoc (square->idx to) piece))))]
+                                       (assoc (square->idx to) piece)))
+        (o/insert! ::game ::moved move))]
 
      ::pawn-move
      [:what
@@ -112,7 +131,8 @@
             pawn (square->piece board from)]
         (o/insert! ::board ::state (-> board
                                        (assoc (square->idx from) nil)
-                                       (assoc (square->idx to) pawn))))]
+                                       (assoc (square->idx to) pawn)))
+        (o/insert! ::game ::moved move))]
 
      }))
 
@@ -135,7 +155,12 @@
               (o/insert ::white ::allow-castle? true)
               (o/insert ::black ::allow-castle? true)
               (o/insert ::board ::state board)
+              (o/insert ::game ::start true)
               (o/insert ::game ::move "g1f3")
+              o/fire-rules
+              (o/insert ::game ::move "e7e5")
+              o/fire-rules
+              (o/insert ::game ::move "d2d4")
               o/fire-rules))
   (->
     (o/query-all @*session ::game)
