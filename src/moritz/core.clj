@@ -3,9 +3,6 @@
             [clojure.string :as str]))
 
 ;; TODO:
-;; ensure correct player moves
-;; store moves
-;; store board history
 ;; valid one space pawn move
 ;; A* search to test target reachable
 ;; valid two space pawn move
@@ -74,25 +71,41 @@
       [::player ::turn player]
       [::white ::allow-castle? w-allow-castle?]
       [::black ::allow-castle? b-allow-castle?]
+      [::move ::number n]
       [::board ::state board]]
 
 
-     ::move-history
+     ::history
      [:what
-      [::player ::turn player {:then false}]
-      [::board ::state board {:then false}]
-      [::game ::moved move]]
+      [::derived ::history history]]
 
      ::end-turn
      [:what
-      [::game ::start started?]
+      [::game ::start started? {:then false}]
+      [::board ::state board {:then false}]
+      [::move ::number n {:then false}]
       [::player ::turn player {:then false}]
       [::game ::moved move]
       :then
-      (when started?
-        (o/insert! ::player ::turn (if (= player white)
-                                     black
-                                     white)))]
+      (let [history (-> (o/query-all o/*session* ::history)
+                        first
+                        :history
+                        vec)
+            next-player-turn (if (= player white)
+                               black
+                               white)]
+        (o/insert!
+          ::derived
+          ::history
+          (conj history {:move/number n
+                         :player/turn player
+                         :board/state board
+                         :game/move move}))
+
+        (o/insert! ::player ::turn next-player-turn)
+
+        (when (= next-player-turn white)
+          (o/insert! ::move ::number (inc n))))]
 
      ::player-move
      [:what
@@ -155,6 +168,7 @@
               (o/insert ::white ::allow-castle? true)
               (o/insert ::black ::allow-castle? true)
               (o/insert ::board ::state board)
+              (o/insert ::move ::number 1)
               (o/insert ::game ::start true)
               (o/insert ::game ::move "g1f3")
               o/fire-rules
@@ -167,4 +181,5 @@
     first
     :board
     print-board)
-  )
+
+  (o/query-all @*session ::history))
