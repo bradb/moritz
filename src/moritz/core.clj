@@ -25,7 +25,7 @@
 ;; undo
 ;; init from fen
 
-(def ^:private board
+(def ^:private default-board
   ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
    "wP" "wP" "wP" "wP" "wP" "wP" "wP" "wP"
    nil nil nil nil nil nil nil nil
@@ -66,88 +66,85 @@
 
 (def ^:private rules
   (o/ruleset
-    {::game
-     [:what
-      [::player ::turn player]
-      [::white ::allow-castle? w-allow-castle?]
-      [::black ::allow-castle? b-allow-castle?]
-      [::move ::number n]
-      [::board ::state board]]
+   {::game
+    [:what
+     [::player ::turn player]
+     [::white ::allow-castle? w-allow-castle?]
+     [::black ::allow-castle? b-allow-castle?]
+     [::move ::number n]
+     [::board ::state board]]
 
+    ::history
+    [:what
+     [::derived ::history history]]
 
-     ::history
-     [:what
-      [::derived ::history history]]
+    ::end-turn
+    [:what
+     [::game ::start started? {:then false}]
+     [::board ::state board {:then false}]
+     [::move ::number n {:then false}]
+     [::player ::turn player {:then false}]
+     [::game ::moved move]
+     :then
+     (let [history (-> (o/query-all o/*session* ::history)
+                       first
+                       :history
+                       vec)
+           next-player-turn (if (= player white)
+                              black
+                              white)]
+       (o/insert!
+        ::derived
+        ::history
+        (conj history {:move/number n
+                       :player/turn player
+                       :board/state board
+                       :game/move move}))
 
-     ::end-turn
-     [:what
-      [::game ::start started? {:then false}]
-      [::board ::state board {:then false}]
-      [::move ::number n {:then false}]
-      [::player ::turn player {:then false}]
-      [::game ::moved move]
-      :then
-      (let [history (-> (o/query-all o/*session* ::history)
-                        first
-                        :history
-                        vec)
-            next-player-turn (if (= player white)
-                               black
-                               white)]
-        (o/insert!
-          ::derived
-          ::history
-          (conj history {:move/number n
-                         :player/turn player
-                         :board/state board
-                         :game/move move}))
+       (o/insert! ::player ::turn next-player-turn)
 
-        (o/insert! ::player ::turn next-player-turn)
+       (when (= next-player-turn white)
+         (o/insert! ::move ::number (inc n))))]
 
-        (when (= next-player-turn white)
-          (o/insert! ::move ::number (inc n))))]
-
-     ::player-move
-     [:what
-      [::player ::turn player]
-      [::board ::state board {:then false}]
-      [::game ::move move]
-      :then
-      (let [[from _] (move->from-to move)
-            [color piece] (square->piece board from)]
-        (when (= color player)
-          (let [move-type (condp = piece
-                            pawn ::pawn
-                            ::invalid)]
-            (o/insert! ::move move-type move))))]
+    ::player-move
+    [:what
+     [::player ::turn player]
+     [::board ::state board {:then false}]
+     [::game ::move move]
+     :then
+     (let [[from _] (move->from-to move)
+           [color piece] (square->piece board from)]
+       (when (= color player)
+         (let [move-type (condp = piece
+                           pawn ::pawn
+                           ::invalid)]
+           (o/insert! ::move move-type move))))]
 
      ;; for now...
-     ::allow-invalid
-     [:what
-      [::board ::state board {:then false}]
-      [::move ::invalid move]
-      :then
-      (let [[from to] (move->from-to move)
-            piece (square->piece board from)]
-        (o/insert! ::board ::state (-> board
-                                       (assoc (square->idx from) nil)
-                                       (assoc (square->idx to) piece)))
-        (o/insert! ::game ::moved move))]
+    ::allow-invalid
+    [:what
+     [::board ::state board {:then false}]
+     [::move ::invalid move]
+     :then
+     (let [[from to] (move->from-to move)
+           piece (square->piece board from)]
+       (o/insert! ::board ::state (-> board
+                                      (assoc (square->idx from) nil)
+                                      (assoc (square->idx to) piece)))
+       (o/insert! ::game ::moved move))]
 
-     ::pawn-move
-     [:what
-      [::board ::state board {:then false}]
-      [::player ::turn player {:then false}]
-      [::move ::pawn move]
-      :then
-      (let [[from to] (move->from-to move)
-            pawn (square->piece board from)]
-        (o/insert! ::board ::state (-> board
-                                       (assoc (square->idx from) nil)
-                                       (assoc (square->idx to) pawn)))
-        (o/insert! ::game ::moved move))]
-
-     }))
+    ::pawn-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn player {:then false}]
+     [::move ::pawn move]
+     :then
+     (let [[from to] (move->from-to move)
+           pawn (square->piece board from)]
+       (o/insert! ::board ::state (-> board
+                                      (assoc (square->idx from) nil)
+                                      (assoc (square->idx to) pawn)))
+       (o/insert! ::game ::moved move))]}))
 
 (defn- print-board
   [board]
@@ -160,6 +157,55 @@
       (println rank-str))
     (println sep))
   (println))
+
+(defn reset-session!
+  []
+  (reset! *session (reduce o/add-rule (o/->session) rules)))
+
+(defn start-game!
+  ([]
+   (start-game! {}))
+  ([{:keys [player-turn allow-white-castle? allow-black-castle? board move-number]
+     :or {player-turn white
+          allow-white-castle? true
+          allow-black-castle? true
+          board default-board
+          move-number 1}}]
+   (swap! *session
+          (fn [session]
+            (-> session
+                (o/insert ::player ::turn player-turn)
+                (o/insert ::white ::allow-castle? allow-white-castle?)
+                (o/insert ::black ::allow-castle? allow-black-castle?)
+                (o/insert ::board ::state board)
+                (o/insert ::move ::number move-number)
+                (o/insert ::game ::start true)
+                o/fire-rules)))))
+
+(defn move!
+  "Apply moves to current board state."
+  [& moves]
+  (when (seq moves)
+    (doseq [m moves]
+      (swap! *session
+             (fn [session]
+               (-> session
+                   (o/insert ::game ::move m)
+                   o/fire-rules)))))
+
+  *session)
+
+(defn board
+  "Return the current board state.
+
+  Board state is 64 element coll of strings representing pieces on squares.
+  For example, a white pawn is \"wP\", black knight \"bN\", and so on.
+  Unoccupied squares are nil."
+  []
+  (-> @*session
+      (o/query-all ::game)
+      first
+      :board))
 
 (comment
   (reset! *session
@@ -177,9 +223,9 @@
               (o/insert ::game ::move "d2d4")
               o/fire-rules))
   (->
-    (o/query-all @*session ::game)
-    first
-    :board
-    print-board)
+   (o/query-all @*session ::game)
+   first
+   :board
+   print-board)
 
   (o/query-all @*session ::history))
