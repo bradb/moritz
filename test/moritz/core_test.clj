@@ -28,8 +28,6 @@
 (use-fixtures :each reset-session!)
 
 (deftest pawn-moves-one-square-test
-  (is (= (mc/board) start-position))
-
   (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
                   "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
                   nil  nil  nil  nil  "wP" nil  nil  nil
@@ -42,10 +40,38 @@
     (is (= (mc/board) expected))))
 
 (deftest pawn-moves-two-squares-test
-  (is false))
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" "bP" "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e4")
+    (is (= (mc/board) expected))))
 
 (deftest pawn-cant-move-more-than-two-squares-test
+  (mc/move! "e2e5")
+  (is (= (mc/board) start-position)))
+
+(deftest pawn-can-only-move-one-square-if-already-moved
   (is false))
 
 (deftest pawn-cant-move-past-blocker-test
+  (is false))
+
+(deftest same-player-cant-move-twice-in-a-row-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" "bP" "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e4" "e4e5")
+    (is (= (mc/board) expected))))
+
+(deftest capture-history-test
   (is false))

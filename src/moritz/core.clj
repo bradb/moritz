@@ -37,6 +37,9 @@
 
 (defonce *session (atom nil))
 
+(def ^:private files "abcdefgh")
+(def ^:private max-rank 8)
+
 (def ^:private white \w)
 (def ^:private black \b)
 (def ^:private pawn \P)
@@ -63,6 +66,34 @@
 (defn- move->from-to
   [move]
   [(subs move 0 2) (subs move 2)])
+
+;; TODO: maybe implement these as lazy seqs so i can take
+;; an abitrary number of squares in a given direction?
+(defn- up
+  ([sq]
+   (up sq 1))
+  ([[file rank] n]
+   (let [rank-int (-> rank
+                      str
+                      Integer/parseInt)
+         up-rank (+ rank-int n)]
+     (when (<= up-rank max-rank)
+       (format "%s%s" file up-rank)))))
+
+(defn- down
+  ([sq]
+   (down sq 1))
+  ([sq n]
+   (up sq (- n))))
+
+(defn- left
+  ([sq]
+   (left sq 1))
+  ([[file rank] n]
+   (let [i (str/index-of files file)
+         new-file-idx (- i n)]
+     (when-let [new-file (get files new-file-idx)]
+       (format "%s%s" new-file rank)))))
 
 (def ^:private rules
   (o/ruleset
@@ -138,6 +169,12 @@
      [::board ::state board {:then false}]
      [::player ::turn player {:then false}]
      [::move ::pawn move]
+
+     :when
+     (let [[from to] (move->from-to move)
+           allowed-tos #{(up from) (up from 2)}]
+       (contains? allowed-tos to))
+
      :then
      (let [[from to] (move->from-to move)
            pawn (square->piece board from)]
@@ -206,26 +243,3 @@
       (o/query-all ::game)
       first
       :board))
-
-(comment
-  (reset! *session
-          (-> (reduce o/add-rule (o/->session) rules)
-              (o/insert ::player ::turn white)
-              (o/insert ::white ::allow-castle? true)
-              (o/insert ::black ::allow-castle? true)
-              (o/insert ::board ::state board)
-              (o/insert ::move ::number 1)
-              (o/insert ::game ::start true)
-              (o/insert ::game ::move "g1f3")
-              o/fire-rules
-              (o/insert ::game ::move "e7e5")
-              o/fire-rules
-              (o/insert ::game ::move "d2d4")
-              o/fire-rules))
-  (->
-   (o/query-all @*session ::game)
-   first
-   :board
-   print-board)
-
-  (o/query-all @*session ::history))
