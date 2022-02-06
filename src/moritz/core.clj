@@ -3,9 +3,6 @@
             [clojure.string :as str]))
 
 ;; TODO:
-;; valid one space pawn move
-;; valid two space pawn move
-;; A* search to test target reachable
 ;; valid bishop move
 ;; valid rook move
 ;; valid queen move
@@ -21,9 +18,9 @@
 ;; debug logging
 ;; basic uci support
 ;; introduce bitboards?
-;; threefold repetition
-;; undo
+;; detect threefold repetition
 ;; init from fen
+;; undo
 
 (def ^:private default-board
   ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
@@ -49,6 +46,8 @@
 (def ^:private queen \Q)
 (def ^:private king \K)
 
+(def ^:private pawn-start-rank {white 2, black 7})
+
 (defn- square->idx
   [sq]
   (let [[file rank] sq
@@ -73,9 +72,7 @@
   ([sq]
    (up sq 1))
   ([[file rank] n]
-   (let [rank-int (-> rank
-                      str
-                      Integer/parseInt)
+   (let [rank-int (Character/digit rank 10)
          up-rank (+ rank-int n)]
      (when (<= up-rank max-rank)
        (format "%s%s" file up-rank)))))
@@ -172,7 +169,17 @@
 
      :when
      (let [[from to] (move->from-to move)
-           allowed-tos #{(up from) (up from 2)}]
+           [_ from-rank] from
+           from-rank (Character/digit from-rank 10)
+           forward (if (= player white)
+                     up
+                     down)
+           forward-1 (forward from)
+           forward-2 (forward from 2)
+           allowed-tos (if (= from-rank (get pawn-start-rank player))
+                         #{forward-1 forward-2}
+                         (when forward-1
+                           #{forward-1}))]
        (contains? allowed-tos to))
 
      :then
@@ -222,15 +229,12 @@
 (defn move!
   "Apply moves to current board state."
   [& moves]
-  (when (seq moves)
-    (doseq [m moves]
-      (swap! *session
-             (fn [session]
-               (-> session
-                   (o/insert ::game ::move m)
-                   o/fire-rules)))))
-
-  *session)
+  (doseq [m moves]
+    (swap! *session
+           (fn [session]
+             (-> session
+                 (o/insert ::game ::move m)
+                 o/fire-rules)))))
 
 (defn board
   "Return the current board state.
@@ -243,3 +247,11 @@
       (o/query-all ::game)
       first
       :board))
+
+(comment
+  (reset-session!)
+  (start-game!)
+  (move! "e2e4")
+  (move! "e7e5")
+  (print-board (board))
+  )

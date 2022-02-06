@@ -55,8 +55,29 @@
   (mc/move! "e2e5")
   (is (= (mc/board) start-position)))
 
+(deftest black-move-after-white-move-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  "bP" nil  nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" nil  "bP" "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e3" "d7d5")
+    (is (= (mc/board) expected))))
+
 (deftest pawn-can-only-move-one-square-if-already-moved
-  (is false))
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  "bP" nil  nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" nil  "bP" "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e3" "d7d5" "e3e5")
+    (is (= (mc/board) expected))))
 
 (deftest pawn-cant-move-past-blocker-test
   (is false))
