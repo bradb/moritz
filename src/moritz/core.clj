@@ -92,6 +92,13 @@
      (when-let [new-file (get files new-file-idx)]
        (format "%s%s" new-file rank)))))
 
+(defn- occupied?
+  [board sq]
+  (square->piece board sq))
+
+(comment
+  (occupied? default-board "e2"))
+
 (def ^:private rules
   (o/ruleset
    {::game
@@ -176,10 +183,22 @@
                      down)
            forward-1 (forward from)
            forward-2 (forward from 2)
-           allowed-tos (if (= from-rank (get pawn-start-rank player))
+           allowed-tos (cond
+                         (occupied? board forward-1)
+                         #{}
+
+                         (= from-rank (get pawn-start-rank player))
                          #{forward-1 forward-2}
-                         (when forward-1
-                           #{forward-1}))]
+
+                         forward-1
+                         #{forward-1}
+
+                         :else
+                         #{})
+           allowed-tos (->> allowed-tos
+                            (remove nil?)
+                            (remove (partial occupied? board))
+                            set)]
        (contains? allowed-tos to))
 
      :then

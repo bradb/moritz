@@ -79,7 +79,36 @@
     (mc/move! "e2e3" "d7d5" "e3e5")
     (is (= (mc/board) expected))))
 
-(deftest pawn-cant-move-past-blocker-test
+(deftest pawn-cant-move-on-top-of-other-piece-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  "bP"  nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" nil "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e4" "e7e5" "e4e5")
+    (is (= (mc/board) expected))))
+
+(deftest pawn-cant-move-past-another-piece-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" nil  "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  "bP"  nil  nil  nil
+                  "wB" nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" nil "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e4" "e7e5" "f1a6")
+    (is (= (mc/board) expected))
+    (mc/move! "a7a5")
+    (is (= (mc/board) expected))))
+
+(deftest capture-history-test
+  (is false))
+
+(deftest bishop-move-test
   (is false))
 
 (deftest same-player-cant-move-twice-in-a-row-test
@@ -93,6 +122,3 @@
                   "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
     (mc/move! "e2e4" "e4e5")
     (is (= (mc/board) expected))))
-
-(deftest capture-history-test
-  (is false))
