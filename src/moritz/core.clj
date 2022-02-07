@@ -37,8 +37,8 @@
 (def ^:private files "abcdefgh")
 (def ^:private max-rank 8)
 
-(def ^:private white \w)
-(def ^:private black \b)
+(def white \w)
+(def black \b)
 (def ^:private pawn \P)
 (def ^:private rook \R)
 (def ^:private knight \N)
@@ -66,8 +66,6 @@
   [move]
   [(subs move 0 2) (subs move 2)])
 
-;; TODO: maybe implement these as lazy seqs so i can take
-;; an abitrary number of squares in a given direction?
 (defn- up
   ([sq]
    (up sq 1))
@@ -95,9 +93,6 @@
 (defn- occupied?
   [board sq]
   (square->piece board sq))
-
-(comment
-  (occupied? default-board "e2"))
 
 (def ^:private rules
   (o/ruleset
@@ -131,10 +126,10 @@
        (o/insert!
         ::derived
         ::history
-        (conj history {:move/number n
-                       :player/turn player
-                       :board/state board
-                       :game/move move}))
+        (conj history {:move-number n
+                       :player player
+                       :board board
+                       :move move}))
 
        (o/insert! ::player ::turn next-player-turn)
 
@@ -267,10 +262,14 @@
       first
       :board))
 
-(comment
-  (reset-session!)
-  (start-game!)
-  (move! "e2e4")
-  (move! "e7e5")
-  (print-board (board))
-  )
+(defn history
+  "Return game history as a coll of maps containing the following keys:
+
+  :move-number - The move number
+  :move - The move played
+  :board - The board state after move was played
+  :player - The player whose turn it was"
+  []
+  (-> (o/query-all @*session ::history)
+      first
+      :history))
