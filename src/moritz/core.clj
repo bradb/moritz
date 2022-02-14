@@ -15,8 +15,9 @@
 ;; recognise stalemate
 ;; prevent castling if not allowed
 ;; don't allow moving into check
-;; debug logging
+;; generate random legal move
 ;; basic uci support
+;; debug logging
 ;; introduce bitboards?
 ;; detect threefold repetition
 ;; init from fen
@@ -147,6 +148,7 @@
        (when (= color player)
          (let [move-type (condp = piece
                            pawn ::pawn
+                           bishop ::bishop
                            ::invalid)]
            (o/insert! ::move move-type move))))]
 
@@ -202,6 +204,20 @@
        (o/insert! ::board ::state (-> board
                                       (assoc (square->idx from) nil)
                                       (assoc (square->idx to) pawn)))
+       (o/insert! ::game ::moved move))]
+
+    ::bishop-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn player {:then false}]
+     [::move ::bishop move]
+
+     :then
+     (let [[from to] (move->from-to move)
+           bishop (square->piece board from)]
+       (o/insert! ::board ::state (-> board
+                                      (assoc (square->idx from) nil)
+                                      (assoc (square->idx to) bishop)))
        (o/insert! ::game ::moved move))]}))
 
 (defn- print-board

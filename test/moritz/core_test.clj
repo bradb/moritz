@@ -150,8 +150,40 @@
     (mc/move! "g1f3")
     (is (= [first-entry second-entry third-entry] (mc/history)))))
 
-(deftest bishop-move-test
+(deftest bishop-move-forward-left-white-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" nil  "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  nil  "bP" nil  nil  nil
+                  "wB" nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" nil "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]]
+    (mc/move! "e2e4" "e7e5" "f1a6")
+    (is (= expected (mc/board)))))
+
+(deftest bishop-move-forward-left-black-test
   (is false))
+
+(deftest bishop-move-backward-left-white-test
+  (is false))
+
+(deftest bishop-move-backward-left-black-test
+  (is false))
+
+(deftest bishop-move-forward-right-white-test
+  (is false))
+
+(deftest bishop-move-forward-right-black-test
+  (is false))
+
+(deftest bishop-move-backward-right-white-test
+  (is false))
+
+(deftest bishop-move-backward-right-black-test
+  (is false))
+
+(deftest bishop-cant-move-off-board-test)
 
 (deftest same-player-cant-move-twice-in-a-row-test
   (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
