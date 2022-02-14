@@ -95,6 +95,15 @@
   [board sq]
   (square->piece board sq))
 
+(defn- apply-move!
+  [board move]
+  (let [[from to] (move->from-to move)
+        bishop (square->piece board from)]
+    (o/insert! ::board ::state (-> board
+                                   (assoc (square->idx from) nil)
+                                   (assoc (square->idx to) bishop)))
+    (o/insert! ::game ::moved move)))
+
 (def ^:private rules
   (o/ruleset
    {::game
@@ -199,12 +208,7 @@
        (contains? allowed-tos to))
 
      :then
-     (let [[from to] (move->from-to move)
-           pawn (square->piece board from)]
-       (o/insert! ::board ::state (-> board
-                                      (assoc (square->idx from) nil)
-                                      (assoc (square->idx to) pawn)))
-       (o/insert! ::game ::moved move))]
+     (apply-move! board move)]
 
     ::bishop-move
     [:what
@@ -213,12 +217,7 @@
      [::move ::bishop move]
 
      :then
-     (let [[from to] (move->from-to move)
-           bishop (square->piece board from)]
-       (o/insert! ::board ::state (-> board
-                                      (assoc (square->idx from) nil)
-                                      (assoc (square->idx to) bishop)))
-       (o/insert! ::game ::moved move))]}))
+     (apply-move! board move)]}))
 
 (defn- print-board
   [board]
