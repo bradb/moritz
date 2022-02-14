@@ -183,7 +183,16 @@
 (deftest bishop-move-backward-right-black-test
   (is false))
 
-(deftest bishop-cant-move-off-board-test)
+(deftest bishop-cant-move-to-non-diagonal-square-test)
+
+(deftest bishop-can-capture-piece-test
+  (is false))
+
+(deftest bishop-cant-move-past-piece-test
+  (is false))
+
+(deftest bishop-cant-move-off-board-test
+  (is false))
 
 (deftest same-player-cant-move-twice-in-a-row-test
   (let [expected ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
