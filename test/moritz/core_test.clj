@@ -199,7 +199,16 @@
     (is (= expected (mc/board)))))
 
 (deftest bishop-move-forward-right-white-test
-  (is false))
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" nil  "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  "wB" "bP" nil  nil  nil
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  "bP" "bP" "bP" "bP" "bB" "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" nil  "bN" "bR"]]
+    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4d5")
+    (is (= expected (mc/board)))))
 
 (deftest bishop-move-forward-right-black-test
   (is false))
@@ -210,7 +219,8 @@
 (deftest bishop-move-backward-right-black-test
   (is false))
 
-(deftest bishop-cant-move-to-non-diagonal-square-test)
+(deftest bishop-cant-move-to-non-diagonal-square-test
+  (is false))
 
 (deftest bishop-can-capture-piece-test
   (is false))
