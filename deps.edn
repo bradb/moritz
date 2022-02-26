@@ -1,2 +1,3 @@
 {:deps
- {net.sekao/odoyle-rules {:mvn/version "0.11.0"}}}
+ {net.sekao/odoyle-rules {:mvn/version "0.11.0"}
+  com.github.bradb/fen {:mvn/version "0.1.17"}}}

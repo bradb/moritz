@@ -1,7 +1,11 @@
 (ns moritz.core-test
   (:require [moritz.core :as mc]
             [clojure.test :refer :all]
+            [fen.core :as fen]
             [odoyle.rules :as o]))
+
+(comment
+  (fen.core/fen->map "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"))
 
 (def start-position
   ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
@@ -162,7 +166,7 @@
     (mc/move! "e2e4" "e7e5" "f1a6")
     (is (= expected (mc/board)))))
 
-(deftest bishop-move-forward-left-black-test
+(deftest bishop-move-forward-right-black-test
   (let [expected ["wR" "wN" "wB" "wQ" "wK" nil  "wN" "wR"
                   "wP" "wP" "wP" "wP" "wB" "wP" "wP" "wP"
                   nil  nil  nil  nil  nil  nil  nil  nil
@@ -210,8 +214,17 @@
     (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4d5")
     (is (= expected (mc/board)))))
 
-(deftest bishop-move-forward-right-black-test
-  (is false))
+(deftest bishop-move-forward-left-black-test
+  (let [expected ["wR" "wN" "wB" "wQ" "wK" nil  "wN" "wR"
+                  "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
+                  nil  nil  nil  nil  nil  nil  nil  nil
+                  nil  nil  nil  nil  "wP" nil  nil  nil
+                  nil  nil  nil  "wB" "bP" nil  nil  nil
+                  nil  nil  nil  nil  nil  "bB"  nil  nil
+                  "bP" "bP" "bP" "bP" nil  "bP" "bP" "bP"
+                  "bR" "bN" "bB" "bQ" "bK" nil  "bN" "bR"]]
+    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7"  "e7f6")
+    (is (= expected (mc/board)))))
 
 (deftest bishop-move-backward-right-white-test
   (is false))
@@ -219,10 +232,10 @@
 (deftest bishop-move-backward-right-black-test
   (is false))
 
-(deftest bishop-cant-move-to-non-diagonal-square-test
+(deftest bishop-can-capture-piece-test
   (is false))
 
-(deftest bishop-can-capture-piece-test
+(deftest bishop-cant-move-to-non-diagonal-square-test
   (is false))
 
 (deftest bishop-cant-move-past-piece-test
