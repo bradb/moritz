@@ -1,6 +1,7 @@
 (ns moritz.core
   (:require [odoyle.rules :as o]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [fen.core :as fen]))
 
 ;; TODO:
 ;; valid bishop move
@@ -109,9 +110,13 @@
    {::game
     [:what
      [::player ::turn player]
-     [::white ::allow-castle? w-allow-castle?]
-     [::black ::allow-castle? b-allow-castle?]
-     [::move ::number n]
+     [::white ::allow-queenside-castle? white-allow-queenside-castle?]
+     [::white ::allow-kingside-castle? white-allow-kingside-castle?]
+     [::black ::allow-queenside-castle? black-allow-queenside-castle?]
+     [::black ::allow-kingside-castle? black-allow-kingside-castle?]
+     [::move ::number fullmove-number]
+     [::move ::en-passant-target-square en-passant-target-square]
+     [::halfmove ::number halfmove-clock]
      [::board ::state board]]
 
     ::history
@@ -238,17 +243,12 @@
 (defn start-game!
   ([]
    (start-game! {}))
-  ([{:keys [player-turn allow-white-castle? allow-black-castle? board move-number]
-     :or {player-turn white
-          allow-white-castle? true
-          allow-black-castle? true
-          board default-board
-          move-number 1}}]
+  ([fen-str]
    (swap! *session
           (fn [session]
             (-> session
                 (o/insert ::player ::turn player-turn)
-                (o/insert ::white ::allow-castle? allow-white-castle?)
+                (o/insert ::white ::allow-queenside-castle? allow-white-castle?)
                 (o/insert ::black ::allow-castle? allow-black-castle?)
                 (o/insert ::board ::state board)
                 (o/insert ::move ::number move-number)
@@ -265,17 +265,12 @@
                  (o/insert ::game ::move m)
                  o/fire-rules)))))
 
-(defn board
-  "Return the current board state.
-
-  Board state is 64 element coll of strings representing pieces on squares.
-  For example, a white pawn is \"wP\", black knight \"bN\", and so on.
-  Unoccupied squares are nil."
+(defn fen
+  "Return the current game state as a FEN string."
   []
   (-> @*session
       (o/query-all ::game)
-      first
-      :board))
+      first))
 
 (defn history
   "Return game history as a coll of maps containing the following keys:
