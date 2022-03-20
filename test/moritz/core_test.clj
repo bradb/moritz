@@ -46,56 +46,17 @@
     (mc/move! "a7a5")
     (is (= expected (mc/fen)))))
 
-(deftest capture-history-test
-  (is (nil? (mc/history)))
+(deftest history-test
+  (is (= ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"] (mc/history)))
 
-  (let [expected-board-1 ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
-                          "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          nil  nil  nil  nil  "wP" nil  nil  nil
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          "bP" "bP" "bP" "bP" "bP" "bP" "bP" "bP"
-                          "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]
-        first-entry {:move "e2e4"
-                     :move-number 1
-                     :player mc/white
-                     :board expected-board-1}
+  (mc/move! "e2e4")
+  (is (= ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+          "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"] (mc/history)))
 
-        expected-board-2 ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"
-                          "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          nil  nil  nil  nil  "wP" nil  nil  nil
-                          nil  nil  nil  "bP" nil  nil  nil  nil
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          "bP" "bP" "bP" nil  "bP" "bP" "bP" "bP"
-                          "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]
-        second-entry {:move "d7d5"
-                      :move-number 1
-                      :player mc/black
-                      :board expected-board-2}
-
-        expected-board-3 ["wR" "wN" "wB" "wQ" "wK" "wB" nil  "wR"
-                          "wP" "wP" "wP" "wP" nil  "wP" "wP" "wP"
-                          nil  nil  nil  nil  nil  "wN" nil  nil
-                          nil  nil  nil  nil  "wP" nil  nil  nil
-                          nil  nil  nil  "bP" nil  nil  nil  nil
-                          nil  nil  nil  nil  nil  nil  nil  nil
-                          "bP" "bP" "bP" nil  "bP" "bP" "bP" "bP"
-                          "bR" "bN" "bB" "bQ" "bK" "bB" "bN" "bR"]
-
-        third-entry {:move "g1f3"
-                     :move-number 2
-                     :player mc/white
-                     :board expected-board-3}]
-    (mc/move! "e2e4")
-    (is (= [first-entry] (mc/history)))
-
-    (mc/move! "d7d5")
-    (is (= [first-entry second-entry] (mc/history)))
-
-    (mc/move! "g1f3")
-    (is (= [first-entry second-entry third-entry] (mc/history)))))
+  (mc/move! "e7e5")
+  (is (= ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+          "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+          "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"] (mc/history))))
 
 (deftest bishop-move-forward-left-white-test
   (let [expected "rnbqkbnr/pppp1ppp/B7/4p3/4P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2"]

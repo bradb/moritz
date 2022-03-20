@@ -5,6 +5,7 @@
 
 ;; TODO:
 ;; valid bishop move
+;; introduce spec
 ;; valid rook move
 ;; valid queen move
 ;; valid knight move
@@ -64,9 +65,6 @@
     (when (and file-offset (<= 1 rank 8))
       (+ rank-offset file-offset))))
 
-(comment
-  (square->idx "h7"))
-
 (defn- square->piece
   [board sq]
   (nth board (square->idx sq) nil))
@@ -105,32 +103,63 @@
     (or ((pieces :white) piece)
         ((pieces :black) piece))))
 
-(defn- set-halfmove-clock!
-  [n]
-  (o/insert! ::game ::halfmove-clock n))
+(comment
+  (def ^:dynamic s (atom nil))
+  (let [rules (o/ruleset
+               {::first-rule
+                [:what
+                 [::fact ::x x]
+                 [::fact ::y y]
+                 :then
+                 (do
+                   (println "x is" x "y is" y)
+                   (-> o/*session*
+                       (o/insert ::fact ::z x)
+                       o/reset!))]
+
+                ::second-rule
+                [:what
+                 [::fact ::z z]
+                 :then
+                 (println "z is" z)]})
+        _ (reset! s (reduce o/add-rule (o/->session) rules))]
+    (-> @s
+        (o/insert ::fact ::x 1)
+        (o/insert ::fact ::y 2)
+        (o/insert ::fact ::x 3)
+        o/fire-rules)
+
+    (o/query-all @s ::first-rule)))
 
 (defn- apply-move!
-  [board move halfmove-clock]
+  [{:keys [board move side-to-move halfmove-clock fullmove-number] :as _opts}]
+  {:pre [(some? board)
+         (some? move)
+         (some? side-to-move)
+         (and (some? halfmove-clock) (<= 0 halfmove-clock))]}
   (let [[from to] (move->from-to move)
         piece-from (square->piece board from)
-        piece-to (square->piece board to)]
-    (o/insert! ::board ::state (-> board
-                                   vec
-                                   (assoc (square->idx from) \-)
-                                   (assoc (square->idx to) piece-from)))
-    (cond
-      (= :pawn (piece-name piece-from))
-      (set-halfmove-clock! 0)
-
-      ;; capture
-      (or (white-pieces piece-to)
-          (black-pieces piece-to))
-      (set-halfmove-clock! 0)
-
-      :else
-      (set-halfmove-clock! (inc halfmove-clock)))
-
-    (o/insert! ::game ::moved move)))
+        piece-to (square->piece board to)
+        next-player (if (= white side-to-move)
+                      black
+                      white)
+        next-move-number (if (= next-player white)
+                           (inc fullmove-number)
+                           fullmove-number)
+        halfmove-clock (cond
+                         (= :pawn (piece-name piece-from)) 0
+                         ;; capture
+                         (or (white-pieces piece-to) (black-pieces piece-to)) 0
+                         :else (inc halfmove-clock))]
+    (-> o/*session*
+        (o/insert ::board ::state (-> board
+                                      vec
+                                      (assoc (square->idx from) \-)
+                                      (assoc (square->idx to) piece-from)))
+        (o/insert ::game ::halfmove-clock halfmove-clock)
+        (o/insert ::move ::number next-move-number)
+        (o/insert ::player ::turn next-player)
+        (o/reset!))))
 
 (defn- allow-pawn-move?
   [{:keys [board side-to-move move]}]
@@ -160,57 +189,64 @@
                          set)]
     (contains? allowed-tos to)))
 
+(defn- record-history!
+  []
+  (let [history (-> (o/query-all o/*session* ::history)
+                    first
+                    :history
+                    vec)
+
+        {:keys [side-to-move
+                allow-white-queenside-castle?
+                allow-white-kingside-castle?
+                allow-black-queenside-castle?
+                allow-black-kingside-castle?
+                fullmove-number
+                en-passant-target-square
+                halfmove-clock
+                board]}
+        (-> (o/query-all o/*session* ::game) first)]
+    (o/insert!
+     ::derived
+     ::history
+     (conj history (fen/map->fen
+                    {:fen/side-to-move side-to-move
+                     :fen/allow-white-queenside-castle? allow-white-queenside-castle?
+                     :fen/allow-white-kingside-castle? allow-white-kingside-castle?
+                     :fen/allow-black-queenside-castle? allow-black-queenside-castle?
+                     :fen/allow-black-kingside-castle? allow-black-kingside-castle?
+                     :fen/fullmove-number fullmove-number
+                     :fen/en-passant-target-square en-passant-target-square
+                     :fen/halfmove-clock halfmove-clock
+                     :fen/board board})))))
+
 (def ^:private rules
   (o/ruleset
    {::game
     [:what
-     [::player ::turn side-to-move]
-     [::white ::allow-queenside-castle? allow-white-queenside-castle?]
-     [::white ::allow-kingside-castle? allow-white-kingside-castle?]
-     [::black ::allow-queenside-castle? allow-black-queenside-castle?]
-     [::black ::allow-kingside-castle? allow-black-kingside-castle?]
-     [::move ::number fullmove-number]
-     [::move ::en-passant-target-square en-passant-target-square]
-     [::game ::halfmove-clock halfmove-clock]
-     [::board ::state board]]
+     [::player ::turn side-to-move {:then false}]
+     [::white ::allow-queenside-castle? allow-white-queenside-castle? {:then false}]
+     [::white ::allow-kingside-castle? allow-white-kingside-castle? {:then false}]
+     [::black ::allow-queenside-castle? allow-black-queenside-castle? {:then false}]
+     [::black ::allow-kingside-castle? allow-black-kingside-castle? {:then false}]
+     [::move ::number fullmove-number {:then false}]
+     [::move ::en-passant-target-square en-passant-target-square {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::board ::state board]
+
+     :then
+     (record-history!)]
 
     ::history
     [:what
      [::derived ::history history]]
 
-    ::end-turn
-    [:what
-     [::game ::start started? {:then false}]
-     [::board ::state board {:then false}]
-     [::move ::number n {:then false}]
-     [::player ::turn player {:then false}]
-     [::game ::moved move]
-     :then
-     (let [history (-> (o/query-all o/*session* ::history)
-                       first
-                       :history
-                       vec)
-           next-player-turn (if (= player white)
-                              black
-                              white)]
-       (o/insert!
-        ::derived
-        ::history
-        (conj history {:move-number n
-                       :player player
-                       :board board
-                       :move move}))
-
-       (o/insert! ::player ::turn next-player-turn)
-
-       (when (= next-player-turn white)
-         (o/insert! ::move ::number (inc n))))]
-
     ::player-move
     [:what
-     [::player ::turn side-to-move]
+     [::player ::turn side-to-move {:then false}]
      [::board ::state board {:then false}]
      [::game ::move move]
+
      :then
      (let [[from _] (move->from-to move)
            piece (square->piece board from)
@@ -231,26 +267,27 @@
     [:what
      [::board ::state board {:then false}]
      [::move ::invalid move]
+
      :then
      (let [[from to] (move->from-to move)
            piece (square->piece board from)]
        (o/insert! ::board ::state (-> board
                                       (assoc (square->idx from) nil)
-                                      (assoc (square->idx to) piece)))
-       (o/insert! ::game ::moved move))]
+                                      (assoc (square->idx to) piece))))]
 
     ::pawn-move
     [:what
      [::board ::state board {:then false}]
      [::player ::turn side-to-move {:then false}]
      [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
      [::move ::pawn move]
 
      :when
-     (allow-pawn-move? {:board board, :side-to-move side-to-move :move move})
+     (allow-pawn-move? {:board board, :side-to-move side-to-move, :move move})
 
      :then
-     (apply-move! board move halfmove-clock)]
+     (apply-move! o/*match*)]
 
     ::bishop-move
     [:what
@@ -309,13 +346,6 @@
                   (o/insert ::game ::start true)
                   o/fire-rules))))))
 
-(comment
-  (reset-session!)
-  (start-game!)
-  @*session
-  (o/query-all @*session ::game)
-  (fen))
-
 (defn move!
   "Apply moves to current board state."
   [& moves]
@@ -352,12 +382,7 @@
                    :fen/side-to-move side-to-move})))
 
 (defn history
-  "Return game history as a coll of maps containing the following keys:
-
-  :move-number - The move number
-  :move - The move played
-  :board - The board state after move was played
-  :player - The player whose turn it was"
+  "Return game history as a coll of FEN strings."
   []
   (-> (o/query-all @*session ::history)
       first
