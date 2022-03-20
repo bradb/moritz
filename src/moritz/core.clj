@@ -292,12 +292,13 @@
     ::bishop-move
     [:what
      [::board ::state board {:then false}]
-     [::player ::turn player {:then false}]
+     [::player ::turn side-to-move {:then false}]
      [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
      [::move ::bishop move]
 
      :then
-     (apply-move! board move halfmove-clock)]}))
+     (apply-move! o/*match*)]}))
 
 (defn- print-board
   [board]
