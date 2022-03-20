@@ -63,9 +63,9 @@
     (mc/move! "e2e4" "e7e5" "f1a6")
     (is (= expected (mc/fen)))))
 
-(deftest bishop-move-south-west-black-test
-  (let [expected "rnbqk1nr/ppppbppp/8/4p3/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 2 3"]
-    (mc/move! "e2e4" "e7e5" "f1e2" "f8e7")
+(deftest bishop-move-north-east-white-test
+  (let [expected "rnbqk1nr/ppppbppp/8/3Bp3/4P3/8/PPPP1PPP/RNBQK1NR b KQkq - 3 3"]
+    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4d5")
     (is (= expected (mc/fen)))))
 
 (deftest bishop-move-south-east-white-test
@@ -73,14 +73,14 @@
     (mc/move! "e2e4" "e7e5" "f1d3" "f8e7" "d3e2")
     (is (= expected (mc/fen)))))
 
-(deftest bishop-move-north-west-black-test
-  (let [expected "rnbqk1nr/pppp1ppp/1b6/4p3/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 4 4"]
-    (mc/move! "e2e4" "e7e5" "f1d3" "f8c5" "d3e2" "c5b6")
+(deftest bishop-move-south-west-white-test
+  (let [expected "rnbqk1nr/ppppbppp/8/4p3/4P3/1B6/PPPP1PPP/RNBQK1NR b KQkq - 3 3"]
+    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4b3")
     (is (= expected (mc/fen)))))
 
-(deftest bishop-move-north-east-white-test
-  (let [expected "rnbqk1nr/ppppbppp/8/3Bp3/4P3/8/PPPP1PPP/RNBQK1NR b KQkq - 3 3"]
-    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4d5")
+(deftest bishop-move-south-west-black-test
+  (let [expected "rnbqk1nr/ppppbppp/8/4p3/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 2 3"]
+    (mc/move! "e2e4" "e7e5" "f1e2" "f8e7")
     (is (= expected (mc/fen)))))
 
 (deftest bishop-move-south-east-black-test
@@ -88,11 +88,15 @@
     (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "d2d3" "e7f6")
     (is (= expected (mc/fen)))))
 
-(deftest bishop-move-backward-right-white-test
-  (is false))
+(deftest bishop-move-north-west-black-test
+  (let [expected "rnbqk1nr/pppp1ppp/1b6/4p3/4P3/8/PPPPBPPP/RNBQK1NR w KQkq - 4 4"]
+    (mc/move! "e2e4" "e7e5" "f1d3" "f8c5" "d3e2" "c5b6")
+    (is (= expected (mc/fen)))))
 
-(deftest bishop-move-backward-right-black-test
-  (is false))
+(deftest bishop-move-north-east-black-test
+  (let [expected "rnbqkbnr/pppp1ppp/8/4p3/4P3/1B6/PPPP1PPP/RNBQK1NR w KQkq - 4 4"]
+    (mc/move! "e2e4" "e7e5" "f1c4" "f8e7" "c4b3" "e7f8")
+    (is (= expected (mc/fen)))))
 
 (deftest bishop-can-capture-piece-test
   (is false))
