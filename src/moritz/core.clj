@@ -6,6 +6,7 @@
 ;; TODO:
 ;; valid bishop move
 ;; introduce spec
+;; ci/cd
 ;; valid rook move
 ;; valid queen move
 ;; valid knight move
