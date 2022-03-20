@@ -46,7 +46,7 @@
     (mc/move! "a7a5")
     (is (= expected (mc/fen)))))
 
-#_(deftest capture-history-test
+(deftest capture-history-test
   (is (nil? (mc/history)))
 
   (let [expected-board-1 ["wR" "wN" "wB" "wQ" "wK" "wB" "wN" "wR"

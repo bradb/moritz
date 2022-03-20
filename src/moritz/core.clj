@@ -30,9 +30,11 @@
 (def ^:private files "abcdefgh")
 (def ^:private max-rank 8)
 
-(def ^:private white :white)
-(def ^:private black :black)
-(def ^:private pieces {:white #{\P \R \N \B \Q \K}, :black #{\p \r \n \b \q \k}})
+(def white :white)
+(def black :black)
+(def ^:private pieces {white #{\P \R \N \B \Q \K}, black #{\p \r \n \b \q \k}})
+(def ^:private black-pieces (pieces black))
+(def ^:private white-pieces (pieces white))
 (def ^:private piece-name {\P :pawn
                            \R :rook
                            \N :knight
@@ -103,14 +105,31 @@
     (or ((pieces :white) piece)
         ((pieces :black) piece))))
 
+(defn- set-halfmove-clock!
+  [n]
+  (o/insert! ::game ::halfmove-clock n))
+
 (defn- apply-move!
-  [board move]
+  [board move halfmove-clock]
   (let [[from to] (move->from-to move)
-        bishop (square->piece board from)]
+        piece-from (square->piece board from)
+        piece-to (square->piece board to)]
     (o/insert! ::board ::state (-> board
                                    vec
                                    (assoc (square->idx from) \-)
-                                   (assoc (square->idx to) bishop)))
+                                   (assoc (square->idx to) piece-from)))
+    (cond
+      (= :pawn (piece-name piece-from))
+      (set-halfmove-clock! 0)
+
+      ;; capture
+      (or (white-pieces piece-to)
+          (black-pieces piece-to))
+      (set-halfmove-clock! 0)
+
+      :else
+      (set-halfmove-clock! (inc halfmove-clock)))
+
     (o/insert! ::game ::moved move)))
 
 (defn- allow-pawn-move?
@@ -224,22 +243,24 @@
     [:what
      [::board ::state board {:then false}]
      [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
      [::move ::pawn move]
 
      :when
      (allow-pawn-move? {:board board, :side-to-move side-to-move :move move})
 
      :then
-     (apply-move! board move)]
+     (apply-move! board move halfmove-clock)]
 
     ::bishop-move
     [:what
      [::board ::state board {:then false}]
      [::player ::turn player {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
      [::move ::bishop move]
 
      :then
-     (apply-move! board move)]}))
+     (apply-move! board move halfmove-clock)]}))
 
 (defn- print-board
   [board]
