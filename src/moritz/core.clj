@@ -49,13 +49,6 @@
                            \b :bishop
                            \q :queen
                            \k :king})
-;; (def ^:private pawn \P)
-;; (def ^:private rook \R)
-;; (def ^:private knight \N)
-;; (def ^:private bishop \B)
-;; (def ^:private queen \Q)
-;; (def ^:private king \K)
-
 (def ^:private pawn-start-rank {white 2, black 7})
 
 (defn- square->idx
@@ -72,16 +65,18 @@
 
 (defn- move->from-to
   [move]
-  [(subs move 0 2) (subs move 2)])
+  (when (some? move)
+    [(subs move 0 2) (subs move 2)]))
 
 (defn- up
   ([sq]
    (up sq 1))
   ([[file rank] n]
-   (let [rank-int (Character/digit rank 10)
-         up-rank (+ rank-int n)]
-     (when (<= up-rank max-rank)
-       (format "%s%s" file up-rank)))))
+   (when (some? file)
+     (let [rank-int (Character/digit rank 10)
+           up-rank (+ rank-int n)]
+       (when (<= up-rank max-rank)
+         (format "%s%s" file up-rank))))))
 
 (defn- down
   ([sq]
@@ -97,6 +92,12 @@
          new-file-idx (- i n)]
      (when-let [new-file (get files new-file-idx)]
        (format "%s%s" new-file rank)))))
+
+(defn- right
+  ([sq]
+   (right sq 1))
+  ([sq n]
+   (left sq (- n))))
 
 (defn- occupied?
   [board sq]
@@ -189,6 +190,20 @@
                          (remove (partial occupied? board))
                          set)]
     (contains? allowed-tos to)))
+
+(defn- allow-bishop-move?
+  [{:keys [board side-to-move move]}]
+  (let [[from to] (move->from-to move)
+        north-west (comp up left)
+        north-east (comp up right)
+        south-west (comp down left)
+        south-east (comp down right)
+        possible-squares (for [f [north-west north-east south-west south-east]]
+                           (take-while some? (iterate f from)))
+        possible-squares (-> possible-squares
+                             flatten
+                             set)]
+    (contains? possible-squares to)))
 
 (defn- record-history!
   []
@@ -297,6 +312,9 @@
      [::game ::halfmove-clock halfmove-clock {:then false}]
      [::move ::number fullmove-number {:then false}]
      [::move ::bishop move]
+
+     :when
+     (allow-bishop-move? {:board board, :side-to-move side-to-move, :move move})
 
      :then
      (apply-move! o/*match*)]}))
