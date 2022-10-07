@@ -109,34 +109,6 @@
       (or ((pieces :white) piece)
           ((pieces :black) piece)))))
 
-(comment
-  (def ^:dynamic s (atom nil))
-  (let [rules (o/ruleset
-               {::first-rule
-                [:what
-                 [::fact ::x x]
-                 [::fact ::y y]
-                 :then
-                 (do
-                   (println "x is" x "y is" y)
-                   (-> o/*session*
-                       (o/insert ::fact ::z x)
-                       o/reset!))]
-
-                ::second-rule
-                [:what
-                 [::fact ::z z]
-                 :then
-                 (println "z is" z)]})
-        _ (reset! s (reduce o/add-rule (o/->session) rules))]
-    (-> @s
-        (o/insert ::fact ::x 1)
-        (o/insert ::fact ::y 2)
-        (o/insert ::fact ::x 3)
-        o/fire-rules)
-
-    (o/query-all @s ::first-rule)))
-
 (defn- apply-move!
   [{:keys [board move side-to-move halfmove-clock fullmove-number] :as _opts}]
   {:pre [(some? board)
