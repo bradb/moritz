@@ -107,7 +107,9 @@
     (is (= expected (mc/fen)))))
 
 (deftest bishop-cant-move-past-piece-test
-  (is false))
+  (let [expected "rnbqk1nr/pppp1ppp/4p3/8/1b1P4/8/PPPBPPPP/RN1QKBNR w KQkq - 2 3"]
+    (mc/move! "d2d4" "e7e6" "c1d2" "f8b4" "d2a5")
+    (is (= expected (mc/fen)))))
 
 (deftest bishop-cant-move-off-board-test
   (let [expected "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]

@@ -6,6 +6,7 @@
 ;; TODO:
 ;; valid bishop move
 ;; introduce spec
+;; introduce pbt
 ;; ci/cd
 ;; valid rook move
 ;; valid queen move
@@ -61,7 +62,8 @@
 
 (defn- square->piece
   [board sq]
-  (nth board (square->idx sq) nil))
+  (when-some [i (square->idx sq)]
+    (nth board i nil)))
 
 (defn- move->from-to
   [move]
@@ -88,10 +90,11 @@
   ([sq]
    (left sq 1))
   ([[file rank] n]
-   (let [i (str/index-of files file)
-         new-file-idx (- i n)]
-     (when-let [new-file (get files new-file-idx)]
-       (format "%s%s" new-file rank)))))
+   (when (some? file)
+     (let [i (str/index-of files file)
+           new-file-idx (- i n)]
+       (when-let [new-file (get files new-file-idx)]
+         (format "%s%s" new-file rank))))))
 
 (defn- right
   ([sq]
@@ -101,9 +104,10 @@
 
 (defn- occupied?
   [board sq]
-  (let [piece (square->piece board sq)]
-    (or ((pieces :white) piece)
-        ((pieces :black) piece))))
+  (when (and (some? board) (some? sq))
+    (let [piece (square->piece board sq)]
+      (or ((pieces :white) piece)
+          ((pieces :black) piece)))))
 
 (comment
   (def ^:dynamic s (atom nil))
@@ -192,14 +196,18 @@
     (contains? allowed-tos to)))
 
 (defn- allow-bishop-move?
-  [{:keys [board side-to-move move]}]
+  [{:keys [board move]}]
   (let [[from to] (move->from-to move)
         north-west (comp up left)
         north-east (comp up right)
         south-west (comp down left)
         south-east (comp down right)
-        possible-squares (for [f [north-west north-east south-west south-east]]
-                           (take-while some? (iterate f from)))
+        unoccupied-square? (fn [sq]
+                             (when (some? sq)
+                               (not (occupied? board sq))))
+        possible-squares (for [f [north-west north-east south-west south-east]
+                               :let [start (f from)]]
+                           (take-while unoccupied-square? (iterate f start)))
         possible-squares (-> possible-squares
                              flatten
                              set)]
