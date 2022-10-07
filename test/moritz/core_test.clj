@@ -110,7 +110,9 @@
   (is false))
 
 (deftest bishop-cant-move-off-board-test
-  (is false))
+  (let [expected "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+    (mc/move! "e2e4" "e7e5" "f1i4")
+    (is (= expected (mc/fen)))))
 
 (deftest same-player-cant-move-twice-in-a-row-test
   (let [expected "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
