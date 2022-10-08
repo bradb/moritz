@@ -99,7 +99,9 @@
     (is (= expected (mc/fen)))))
 
 (deftest bishop-can-capture-piece-test
-  (is false))
+  (let [expected "rnbqkb1r/ppp1pppp/3p1B2/8/3P4/8/PPP1PPPP/RN1QKBNR b KQkq - 0 3"]
+    (mc/move! "d2d4" "g8f6" "c1g5" "d7d6" "g5f6")
+    (is (= expected (mc/fen)))))
 
 (deftest bishop-cant-move-to-non-diagonal-square-test
   (let [expected "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
@@ -119,4 +121,9 @@
 (deftest same-player-cant-move-twice-in-a-row-test
   (let [expected "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
     (mc/move! "e2e4" "e4e5")
+    (is (= expected (mc/fen)))))
+
+(deftest kingside-knight-move
+  (let [expected "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
+    (mc/move! "d2d4" "g8f6")
     (is (= expected (mc/fen)))))

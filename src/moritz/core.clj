@@ -4,7 +4,6 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid bishop move
 ;; introduce spec
 ;; introduce pbt
 ;; ci/cd
@@ -38,6 +37,7 @@
 (def ^:private pieces {white #{\P \R \N \B \Q \K}, black #{\p \r \n \b \q \k}})
 (def ^:private black-pieces (pieces black))
 (def ^:private white-pieces (pieces white))
+(def ^:private empty-square \-)
 (def ^:private piece-name {\P :pawn
                            \R :rook
                            \N :knight
@@ -63,7 +63,10 @@
 (defn- square->piece
   [board sq]
   (when-some [i (square->idx sq)]
-    (nth board i nil)))
+    (let [p (nth board i nil)]
+      (if (= empty-square p)
+        nil
+        p))))
 
 (defn- move->from-to
   [move]
@@ -104,10 +107,7 @@
 
 (defn- occupied?
   [board sq]
-  (when (and (some? board) (some? sq))
-    (let [piece (square->piece board sq)]
-      (or ((pieces :white) piece)
-          ((pieces :black) piece)))))
+  (some? (square->piece board sq)))
 
 (defn- apply-move!
   [{:keys [board move side-to-move halfmove-clock fullmove-number] :as _opts}]
@@ -167,19 +167,32 @@
                          set)]
     (contains? allowed-tos to)))
 
+(defn- colour
+  [piece]
+  (when (some? piece)
+    (cond
+      (contains? white-pieces piece) :white
+      (contains? black-pieces piece) :black
+      :else nil)))
+
 (defn- allow-bishop-move?
-  [{:keys [board move]}]
-  (let [[from to] (move->from-to move)
+  [{:keys [board side-to-move move]}]
+  (let [[start to] (move->from-to move)
         north-west (comp up left)
         north-east (comp up right)
         south-west (comp down left)
         south-east (comp down right)
-        unoccupied-square? (fn [sq]
-                             (when (some? sq)
-                               (not (occupied? board sq))))
-        possible-squares (for [f [north-west north-east south-west south-east]
-                               :let [start (f from)]]
-                           (take-while unoccupied-square? (iterate f start)))
+        possible-squares (for [f [north-west north-east south-west south-east]]
+                           (loop [sq (f start)
+                                  pos-squares []]
+                             (if (some? sq)
+                               (if-some [piece (square->piece board sq)]
+                                 (if (= (colour piece) side-to-move)
+                                   pos-squares
+                                   (conj pos-squares sq))
+                                 (recur (f sq)
+                                        (conj pos-squares sq)))
+                               pos-squares)))
         possible-squares (-> possible-squares
                              flatten
                              set)]
@@ -262,14 +275,13 @@
     ::allow-invalid
     [:what
      [::board ::state board {:then false}]
+     [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
      [::move ::invalid move]
 
      :then
-     (let [[from to] (move->from-to move)
-           piece (square->piece board from)]
-       (o/insert! ::board ::state (-> board
-                                      (assoc (square->idx from) nil)
-                                      (assoc (square->idx to) piece))))]
+     (apply-move! o/*match*)]
 
     ::pawn-move
     [:what
