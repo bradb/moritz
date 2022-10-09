@@ -4,12 +4,9 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; introduce spec
-;; introduce pbt
-;; ci/cd
-;; valid rook move
 ;; valid queen move
 ;; valid knight move
+;; valid rook move
 ;; valid king move
 ;; valid en passant
 ;; valid castle kingside
@@ -24,6 +21,9 @@
 ;; introduce bitboards?
 ;; detect threefold repetition
 ;; init from fen
+;; introduce spec
+;; introduce pbt
+;; ci/cd
 ;; undo
 (def start-position-default "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
@@ -175,6 +175,10 @@
       (contains? black-pieces piece) :black
       :else nil)))
 
+(defn- allow-queen-move?
+  [& opts]
+  true)
+
 (defn- allow-bishop-move?
   [{:keys [board side-to-move move]}]
   (let [[start to] (move->from-to move)
@@ -197,6 +201,10 @@
                              flatten
                              set)]
     (contains? possible-squares to)))
+
+(defn- allow-rook-move?
+  [& opts]
+  true)
 
 (defn- record-history!
   []
@@ -265,11 +273,10 @@
                move-type (case pn
                            :pawn ::pawn
                            :bishop ::bishop
+                           :rook ::rook
+                           :queen ::queen
                            ::invalid)]
-           (condp = pn
-             :pawn (o/insert! ::move ::pawn move)
-             :bishop (o/insert! ::move ::bishop move)
-             (o/insert! ::move ::invalid move)))))]
+           (o/insert! ::move move-type move))))]
 
      ;; for now...
     ::allow-invalid
@@ -307,6 +314,34 @@
 
      :when
      (allow-bishop-move? {:board board, :side-to-move side-to-move, :move move})
+
+     :then
+     (apply-move! o/*match*)]
+
+    ::queen-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
+     [::move ::queen move]
+
+     :when
+     (allow-queen-move? {:board board, :side-to-move side-to-move, :move move})
+
+     :then
+     (apply-move! o/*match*)]
+
+    ::rook-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
+     [::move ::rook move]
+
+     :when
+     (allow-rook-move? {:board board, :side-to-move side-to-move, :move move})
 
      :then
      (apply-move! o/*match*)]}))
@@ -348,9 +383,9 @@
               (-> session
                   (o/insert ::player ::turn side-to-move)
                   (o/insert ::white ::allow-queenside-castle? allow-white-queenside-castle?)
-                  (o/insert ::white ::allow-kingside-castle? allow-white-queenside-castle?)
+                  (o/insert ::white ::allow-kingside-castle? allow-white-kingside-castle?)
                   (o/insert ::black ::allow-queenside-castle? allow-black-queenside-castle?)
-                  (o/insert ::black ::allow-kingside-castle? allow-black-queenside-castle?)
+                  (o/insert ::black ::allow-kingside-castle? allow-black-kingside-castle?)
                   (o/insert ::board ::state board)
                   (o/insert ::move ::number fullmove-number)
                   (o/insert ::move ::en-passant-target-square en-passant-target-square)

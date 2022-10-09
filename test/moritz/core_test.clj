@@ -123,7 +123,107 @@
     (mc/move! "e2e4" "e4e5")
     (is (= expected (mc/fen)))))
 
-(deftest kingside-knight-move
+(deftest kingside-knight-move-test
   (let [expected "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
     (mc/move! "d2d4" "g8f6")
     (is (= expected (mc/fen)))))
+
+(defn- init-queen-test!
+  []
+  (mc/start-game! "r1bqkbnr/pppp1ppp/2n5/4p3/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3"))
+
+(deftest queen-cant-make-knight-move-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3"]
+    (mc/move! "g4f6")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-east-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P2Q/8/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4h4")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-west-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4PQ2/8/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4f4")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-north-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p1Q1/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4g5")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-south-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/6Q1/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4g3")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-north-east-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4h5")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-north-west-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4pQ2/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4f5")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-south-east-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/7Q/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4h3")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-move-south-west-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5Q2/PPPP1PPP/RNB1KBNR b KQkq - 3 3"]
+    (mc/move! "g4f3")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-can-capture-piece-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1pQp/2n5/4p3/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 3"]
+    (mc/move! "g4g7")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-cant-capture-piece-of-own-colour-test
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3"]
+    (mc/move! "g4g2")
+    (is (= expected (mc/fen)))))
+
+(deftest queen-cant-capture-piece-blocked-by-other-piece
+  (init-queen-test!)
+  (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3"]
+    (mc/move! "g4g8")
+    (is (= expected (mc/fen)))))
+
+(comment 
+  (deftest rook-move-east
+    (let [expected "rnbqkbnr/pppp1ppp/4p3/8/8/2N5/PPPPPPPP/1RBQKBNR b Kkq - 1 2"]
+      (mc/move! "b1c3" "e7e6" "a1b1")
+      (is (= expected (mc/fen)))))
+
+  (deftest rook-move-west
+    (is false))
+
+  (deftest rook-move-north
+    (is false))
+
+  (deftest rook-move-south
+    (is false))
+
+  (deftest rook-cant-move-past-piece
+    (is false))
+
+  (deftest rook-capture-opposite-colour-piece-test
+    (is false))
+
+  (deftest rook-cant-capture-own-colour-piece-test
+    (is false)))
