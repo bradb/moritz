@@ -213,10 +213,6 @@
 (defn- allow-bishop-move?
   [{:keys [board side-to-move move]}]
   (let [[start to] (move->from-to move)
-        north-west (comp north west)
-        north-east (comp north east)
-        south-west (comp south west)
-        south-east (comp south east)
         possible-squares (for [f [north-west north-east south-west south-east]]
                            (loop [sq (f start)
                                   pos-squares []]
