@@ -4,9 +4,8 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid queen move
-;; valid knight move
 ;; valid rook move
+;; valid knight move
 ;; valid king move
 ;; valid en passant
 ;; valid castle kingside
@@ -23,6 +22,7 @@
 ;; init from fen
 ;; introduce spec
 ;; introduce pbt
+;; create fen reader literal
 ;; ci/cd
 ;; undo
 (def start-position-default "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -73,25 +73,25 @@
   (when (some? move)
     [(subs move 0 2) (subs move 2)]))
 
-(defn- up
+(defn- north
   ([sq]
-   (up sq 1))
+   (north sq 1))
   ([[file rank] n]
    (when (some? file)
      (let [rank-int (Character/digit rank 10)
            up-rank (+ rank-int n)]
-       (when (<= up-rank max-rank)
+       (when (<= 1 up-rank max-rank)
          (format "%s%s" file up-rank))))))
 
-(defn- down
+(defn- south
   ([sq]
-   (down sq 1))
+   (south sq 1))
   ([sq n]
-   (up sq (- n))))
+   (north sq (- n))))
 
-(defn- left
+(defn- west
   ([sq]
-   (left sq 1))
+   (west sq 1))
   ([[file rank] n]
    (when (some? file)
      (let [i (str/index-of files file)
@@ -99,15 +99,22 @@
        (when-let [new-file (get files new-file-idx)]
          (format "%s%s" new-file rank))))))
 
-(defn- right
+(defn- east
   ([sq]
-   (right sq 1))
+   (east sq 1))
   ([sq n]
-   (left sq (- n))))
+   (west sq (- n))))
+
+(def ^:private north-east (comp north east))
+(def ^:private north-west (comp north west))
+(def ^:private south-east (comp south east))
+(def ^:private south-west (comp south west))
 
 (defn- occupied?
   [board sq]
   (some? (square->piece board sq)))
+
+(def ^:private unoccupied? (comp not occupied?))
 
 (defn- apply-move!
   [{:keys [board move side-to-move halfmove-clock fullmove-number] :as _opts}]
@@ -145,8 +152,8 @@
         [_ from-rank] from
         from-rank (Character/digit from-rank 10)
         forward (if (= side-to-move white)
-                  up
-                  down)
+                  north
+                  south)
         forward-1 (forward from)
         forward-2 (forward from 2)
         allowed-tos (cond
@@ -175,17 +182,41 @@
       (contains? black-pieces piece) :black
       :else nil)))
 
+(defn- valid-slide-squares
+  [{:keys [board side-to-move slide-fns]}]
+  (let [valid-targets (for [f slide-fns
+                            :let [possible-targets (take-while some? (f))
+                                  [unoccupied-squares occupied-squares] (split-with (partial unoccupied? board) possible-targets)
+                                  blocked-square (first occupied-squares)]]
+                        (if (some? blocked-square)
+                          (let [blocker-colour (->> blocked-square
+                                                    (square->piece board)
+                                                    colour)]
+                            (if (= blocker-colour side-to-move)
+                              unoccupied-squares
+                              (conj unoccupied-squares blocked-square)))
+                          unoccupied-squares))]
+    (-> valid-targets
+        flatten
+        set)))
+
 (defn- allow-queen-move?
-  [& opts]
-  true)
+  [{:keys [board side-to-move move]}]
+  (let [[from to] (move->from-to move)
+        slide-fns (for [f [north east south west north-east north-west south-east south-west]]
+                    (if-some [start (f from)]
+                      (fn [] (iterate f start))
+                      (fn [] nil)))
+        valid-squares (valid-slide-squares {:board board, :side-to-move side-to-move, :slide-fns slide-fns})]
+    (contains? valid-squares to)))
 
 (defn- allow-bishop-move?
   [{:keys [board side-to-move move]}]
   (let [[start to] (move->from-to move)
-        north-west (comp up left)
-        north-east (comp up right)
-        south-west (comp down left)
-        south-east (comp down right)
+        north-west (comp north west)
+        north-east (comp north east)
+        south-west (comp south west)
+        south-east (comp south east)
         possible-squares (for [f [north-west north-east south-west south-east]]
                            (loop [sq (f start)
                                   pos-squares []]
