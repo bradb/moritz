@@ -4,8 +4,8 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid rook move
 ;; valid knight move
+;; valid rook move
 ;; valid king move
 ;; valid en passant
 ;; valid castle kingside
@@ -229,6 +229,10 @@
                              set)]
     (contains? possible-squares to)))
 
+(defn- allow-knight-move?
+  [{:keys [board side-to-move move]}]
+  true)
+
 (defn- allow-rook-move?
   [& opts]
   true)
@@ -302,6 +306,7 @@
                            :bishop ::bishop
                            :rook ::rook
                            :queen ::queen
+                           :knight ::knight
                            ::invalid)]
            (o/insert! ::move move-type move))))]
 
@@ -369,6 +374,20 @@
 
      :when
      (allow-rook-move? {:board board, :side-to-move side-to-move, :move move})
+
+     :then
+     (apply-move! o/*match*)]
+
+    ::knight-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
+     [::move ::knight move]
+
+     :when
+     (allow-knight-move? {:board board, :side-to-move side-to-move, :move move})
 
      :then
      (apply-move! o/*match*)]}))

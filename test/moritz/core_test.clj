@@ -198,11 +198,66 @@
     (mc/move! "g4g2")
     (is (= expected (mc/fen)))))
 
-(deftest queen-cant-capture-piece-blocked-by-other-piece
+(deftest queen-cant-capture-piece-blocked-by-other-piece-test
   (init-queen-test!)
   (let [expected "r1bqkbnr/pppp1ppp/2n5/4p3/4P1Q1/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3"]
     (mc/move! "g4g8")
     (is (= expected (mc/fen)))))
+
+(deftest valid-knight-moves-test
+  (let [start-pos "3k4/1p6/8/8/5N2/8/8/2K5 w - - 0 1"]
+    (mc/start-game! start-pos)
+    (mc/move! "f4d3")
+    (is (= "3k4/1p6/8/8/8/3N4/8/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4d5")
+    (is (= "3k4/1p6/8/3N4/8/8/8/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4e2")
+    (is (= "3k4/1p6/8/8/8/8/4N3/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4e6")
+    (is (= "3k4/1p6/4N3/8/8/8/8/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4g6")
+    (is (= "3k4/1p6/6N1/8/8/8/8/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4g2")
+    (is (= "3k4/1p6/8/8/8/8/6N1/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4h5")
+    (is (= "3k4/1p6/8/7N/8/8/8/2K5 b - - 1 1" (mc/fen)))
+
+    (mc/start-game! start-pos)
+    (mc/move! "f4h3")
+    (is (= "3k4/1p6/8/8/8/7N/8/2K5 b - - 1 1" (mc/fen)))))
+
+(deftest knight-can-capture-opponents-piece-test
+  (mc/start-game! "rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2")
+  (mc/move! "f3e5")
+  (is (= "rnbqkbnr/pppp1ppp/8/4N3/8/8/PPPPPPPP/RNBQKB1R b KQkq - 0 2" (mc/fen))))
+
+(deftest knight-cant-capture-own-colour-piece-test
+  (let [start-pos "rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2"]
+    (mc/start-game! start-pos)
+    (mc/move! "f3h2")
+    (is (= start-pos (mc/fen)))))
+
+(deftest knight-can-jump-over-own-pieces-test
+  (mc/start-game!)
+  (mc/move! "g1f3")
+  (is (= "rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq - 1 1" (mc/fen))))
+
+(deftest knight-cant-move-off-edge-of-board-test
+  (mc/start-game!)
+  (mc/move! "g1i2")
+  (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" (mc/fen))))
 
 (comment 
   (deftest rook-move-east
