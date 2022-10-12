@@ -238,6 +238,12 @@
     (mc/move! "f4h3")
     (is (= "3k4/1p6/8/8/8/7N/8/2K5 b - - 1 1" (mc/fen)))))
 
+(deftest knight-cant-move-straight-test
+  (let [start "rnbqkbnr/ppp1pppp/8/3p4/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2"]
+    (mc/start-game! start)
+    (mc/move! "f3h3")
+    (is (= start (mc/fen)))))
+
 (deftest knight-can-capture-opponents-piece-test
   (mc/start-game! "rnbqkbnr/pppp1ppp/8/4p3/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 2")
   (mc/move! "f3e5")

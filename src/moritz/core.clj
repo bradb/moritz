@@ -231,7 +231,29 @@
 
 (defn- allow-knight-move?
   [{:keys [board side-to-move move]}]
-  true)
+  (let [[from to] (move->from-to move)
+        west-2 #(west % 2)
+        east-2 #(east % 2)
+        north-2 #(north % 2)
+        south-2 #(south % 2)
+
+        move-fns #{(comp west-2 north)
+                   (comp west-2 south)
+                   (comp east-2 north)
+                   (comp east-2 south)
+                   (comp north-2 east)
+                   (comp north-2 west)
+                   (comp south-2 east)
+                   (comp south-2 west)}
+
+        allowed-squares (for [f move-fns
+                              :let [square (f from)
+                                    piece (when square (square->piece board square))]
+                              :when (and square
+                                         (or (nil? piece)
+                                             (not= (colour piece) side-to-move)))]
+                          square)]
+    (contains? (set allowed-squares) to)))
 
 (defn- allow-rook-move?
   [& opts]
