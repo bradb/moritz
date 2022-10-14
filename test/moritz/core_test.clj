@@ -330,3 +330,38 @@
     (mc/start-game! start-pos)
     (mc/move! "e2e3" "h8g8")
     (is (= "r1bqkbr1/pppppppp/2n2n2/8/8/2N1PN2/PPPP1PPP/R1BQKB1R w KQq - 1 4" (mc/fen)))))
+
+(deftest valid-king-moves-test
+  (let [start-pos "8/p4b2/3k4/8/8/2K5/4PPN1/8 b - - 0 1"
+        reset-pos! (fn [] (mc/start-game! start-pos))]
+    (reset-pos!)
+    (mc/move! "d6d5")
+    (is (= "8/p4b2/8/3k4/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "south")
+
+    (reset-pos!)
+    (mc/move! "d6d7")
+    (is (= "8/p2k1b2/8/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "north")
+
+    (reset-pos!)
+    (mc/move! "d6c6")
+    (is (= "8/p4b2/2k5/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "west")
+
+    (reset-pos!)
+    (mc/move! "d6e6")
+    (is (= "8/p4b2/4k3/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "east")
+
+    (reset-pos!)
+    (mc/move! "d6c5")
+    (is (= "8/p4b2/8/2k5/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "southwest")
+
+    (reset-pos!)
+    (mc/move! "d6e5")
+    (is (= "8/p4b2/8/4k3/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "southeast")
+
+    (reset-pos!)
+    (mc/move! "d6c7")
+    (is (= "8/p1k2b2/8/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "northwest")
+
+    (reset-pos!)
+    (mc/move! "d6e7")
+    (is (= "8/p3kb2/8/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "northeast")))

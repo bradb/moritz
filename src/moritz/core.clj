@@ -18,6 +18,7 @@
 ;; generate random legal move
 ;; basic uci support
 ;; debug logging
+;; track updated packages available
 ;; detect threefold repetition
 ;; introduce spec
 ;; introduce pbt
