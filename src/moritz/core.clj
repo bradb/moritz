@@ -8,8 +8,10 @@
 ;; - single square
 ;; - valid castle kingside
 ;; - valid castle queenside
+;; - prevent castling if not allowed
 ;; don't allow moving into check
-;; prevent castling if not allowed
+;; don't allow moving across check when castling
+;; don't allow moving out of check when castling
 ;; valid en passant
 ;; recognise checkmate
 ;; recognise stalemate
