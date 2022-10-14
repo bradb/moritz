@@ -284,6 +284,20 @@
                           square)]
     (contains? (set allowed-squares) to)))
 
+(defn- allow-king-move?
+  [{:keys [board side-to-move move]}]
+  (let [[from to] (move->from-to move)
+        valid-tos (for [f [north east south west north-east north-west south-east south-west]
+                        :let [possible-to (f from)
+                              piece (when (some? possible-to)
+                                      (square->piece board possible-to))]
+                        :when (and (some? possible-to)
+                                   (or (nil? piece)
+                                       (not= (colour piece) side-to-move)))]
+                    possible-to)
+        valid-tos (set valid-tos)]
+    (contains? valid-tos to)))
+
 (defn- allow-rook-move?
   [{:keys [board side-to-move move]}]
   (let [[from to] (move->from-to move)
@@ -363,6 +377,7 @@
                            :rook ::rook
                            :queen ::queen
                            :knight ::knight
+                           :king ::king
                            ::invalid)]
            (o/insert! ::move move-type move))))]
 
@@ -448,6 +463,20 @@
 
      :when
      (allow-knight-move? {:board board, :side-to-move side-to-move, :move move})
+
+     :then
+     (apply-move! o/*match*)]
+
+    ::king-move
+    [:what
+     [::board ::state board {:then false}]
+     [::player ::turn side-to-move {:then false}]
+     [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::move ::number fullmove-number {:then false}]
+     [::move ::king move]
+
+     :when
+     (allow-king-move? {:board board, :side-to-move side-to-move, :move move})
 
      :then
      (apply-move! o/*match*)]}))

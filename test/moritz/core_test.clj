@@ -364,4 +364,39 @@
 
     (reset-pos!)
     (mc/move! "d6e7")
-    (is (= "8/p3kb2/8/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "northeast")))
+    (is (= "8/p3kb2/8/8/8/2K5/4PPN1/8 w - - 1 2" (mc/fen)) "northeast")
+
+    (reset-pos!)
+    (mc/move! "d6e5" "g2f4" "e5f4")
+    (is (= "8/p4b2/8/8/5k2/2K5/4PP2/8 w - - 0 3" (mc/fen)) "capture enemy piece")))
+
+(deftest invalid-king-moves-test
+  (let [start-pos "8/p4b2/3k4/8/8/3K4/4PPN1/8 w - - 0 1"]
+    (mc/start-game! start-pos)
+
+    (mc/move! "d3e2")
+    (is (= start-pos (mc/fen)) "can't capture own piece")
+
+    (mc/move! "d3d5")
+    (is (= start-pos (mc/fen)) "can't move more then one square")
+
+    (mc/move! "d3d9")
+    (is (= start-pos (mc/fen)) "can't move off the board")))
+
+(deftest king-can-castle-kingside-test
+  (is false))
+
+(deftest king-can-castle-queenside-test
+  (is false))
+
+(deftest king-cant-castle-kingside-test
+  (is false))
+
+(deftest king-cant-castle-queenside-test
+  (is false))
+
+(deftest king-cant-castle-through-check-test
+  (is false))
+
+(deftest king-cant-castle-out-of-check-test
+  (is false))
