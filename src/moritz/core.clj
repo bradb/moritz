@@ -4,7 +4,6 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid knight move
 ;; valid rook move
 ;; valid king move
 ;; valid en passant
@@ -183,19 +182,21 @@
       :else nil)))
 
 (defn- valid-slide-squares
-  [{:keys [board side-to-move slide-fns]}]
+  [{:keys [board side-to-move from slide-fns]}]
   (let [valid-targets (for [f slide-fns
-                            :let [possible-targets (take-while some? (f))
-                                  [unoccupied-squares occupied-squares] (split-with (partial unoccupied? board) possible-targets)
-                                  blocked-square (first occupied-squares)]]
-                        (if (some? blocked-square)
-                          (let [blocker-colour (->> blocked-square
-                                                    (square->piece board)
-                                                    colour)]
-                            (if (= blocker-colour side-to-move)
-                              unoccupied-squares
-                              (conj unoccupied-squares blocked-square)))
-                          unoccupied-squares))]
+                            :let [start (f from)]
+                            :when (some? start)]
+                        (let [possible-targets (take-while some? (iterate f start))
+                              [unoccupied-squares occupied-squares] (split-with (partial unoccupied? board) possible-targets)
+                              blocked-square (first occupied-squares)]
+                          (if (some? blocked-square)
+                            (let [blocker-colour (->> blocked-square
+                                                      (square->piece board)
+                                                      colour)]
+                              (if (= blocker-colour side-to-move)
+                                unoccupied-squares
+                                (conj unoccupied-squares blocked-square)))
+                            unoccupied-squares)))]
     (-> valid-targets
         flatten
         set)))
@@ -203,11 +204,11 @@
 (defn- allow-queen-move?
   [{:keys [board side-to-move move]}]
   (let [[from to] (move->from-to move)
-        slide-fns (for [f [north east south west north-east north-west south-east south-west]]
-                    (if-some [start (f from)]
-                      (fn [] (iterate f start))
-                      (fn [] nil)))
-        valid-squares (valid-slide-squares {:board board, :side-to-move side-to-move, :slide-fns slide-fns})]
+        slide-fns [north east south west north-east north-west south-east south-west]
+        valid-squares (valid-slide-squares {:board board
+                                            :side-to-move side-to-move
+                                            :from from
+                                            :slide-fns slide-fns})]
     (contains? valid-squares to)))
 
 (defn- allow-bishop-move?
@@ -256,8 +257,13 @@
     (contains? (set allowed-squares) to)))
 
 (defn- allow-rook-move?
-  [& opts]
-  true)
+  [{:keys [board side-to-move move]}]
+  (let [[from to] (move->from-to move)
+        allowed-squares (valid-slide-squares {:board board
+                                              :side-to-move side-to-move
+                                              :from from
+                                              :slide-fns [north east south west]})]
+    (contains? allowed-squares to)))
 
 (defn- record-history!
   []

@@ -265,26 +265,56 @@
   (mc/move! "g1i2")
   (is (= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" (mc/fen))))
 
-(comment 
-  (deftest rook-move-east
-    (let [expected "rnbqkbnr/pppp1ppp/4p3/8/8/2N5/PPPPPPPP/1RBQKBNR b Kkq - 1 2"]
-      (mc/move! "b1c3" "e7e6" "a1b1")
-      (is (= expected (mc/fen)))))
+(deftest valid-rook-moves-test
+  (let [start-pos "2k5/5p2/5n2/8/8/8/3P1R2/1K6 w - - 0 1"
+        reset-pos! (fn [] (mc/start-game! start-pos))]
+    (reset-pos!)
+    (mc/move! "f2f4")
+    (is (= "2k5/5p2/5n2/8/5R2/8/3P4/1K6 b - - 1 1" (mc/fen)) "north")
 
-  (deftest rook-move-west
-    (is false))
+    (reset-pos!)
+    (mc/move! "f2f1")
+    (is (= "2k5/5p2/5n2/8/8/8/3P4/1K3R2 b - - 1 1" (mc/fen)) "south")
 
-  (deftest rook-move-north
-    (is false))
+    (reset-pos!)
+    (mc/move! "f2e2")
+    (is (= "2k5/5p2/5n2/8/8/8/3PR3/1K6 b - - 1 1" (mc/fen)) "west")
 
-  (deftest rook-move-south
-    (is false))
+    (reset-pos!)
+    (mc/move! "f2h2")
+    (is (= "2k5/5p2/5n2/8/8/8/3P3R/1K6 b - - 1 1" (mc/fen)) "east")
 
-  (deftest rook-cant-move-past-piece
-    (is false))
+    (reset-pos!)
+    (mc/move! "f2f6")
+    (is (= "2k5/5p2/5R2/8/8/8/3P4/1K6 b - - 0 1" (mc/fen)) "capture enemy piece")))
 
-  (deftest rook-capture-opposite-colour-piece-test
-    (is false))
+(deftest invalid-rook-moves-test
+  (let [start-pos "2k5/5p2/5n2/8/8/8/3P1R2/1K6 w - - 0 1"
+        reset-pos! (fn [] (mc/start-game! start-pos))]
+    (reset-pos!)
+    (mc/move! "f2d2")
+    (is (= start-pos (mc/fen)) "can't capture own piece")
 
-  (deftest rook-cant-capture-own-colour-piece-test
-    (is false)))
+    (reset-pos!)
+    (mc/move! "f2f7")
+    (is (= start-pos (mc/fen)) "can't capture enemy piece behind other piece")
+
+    (reset-pos!)
+    (mc/move! "f2e6")
+    (is (= start-pos (mc/fen)) "can't move in non-straight line")
+
+    (reset-pos!)
+    (mc/move! "f2j9")
+    (is (= start-pos (mc/fen)) "can't move off the board")))
+
+(deftest white-queen-rook-move-removes-castling-rights-test
+  (is false))
+
+(deftest black-queen-rook-move-removes-castling-rights-test
+  (is false))
+
+(deftest white-king-rook-move-removes-castling-rights-test
+  (is false))
+
+(deftest black-king-rook-move-removes-castling-rights-test
+  (is false))
