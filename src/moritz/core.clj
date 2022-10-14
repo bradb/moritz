@@ -5,22 +5,20 @@
 
 ;; TODO:
 ;; valid king move
+;; - single square
+;; - valid castle kingside
+;; - valid castle queenside
+;; don't allow moving into check
+;; prevent castling if not allowed
 ;; valid en passant
-;; valid castle kingside
-;; valid castle queenside
 ;; recognise checkmate
 ;; recognise stalemate
-;; prevent castling if not allowed
-;; don't allow moving into check
 ;; generate random legal move
 ;; basic uci support
 ;; debug logging
-;; introduce bitboards?
 ;; detect threefold repetition
-;; init from fen
 ;; introduce spec
 ;; introduce pbt
-;; create fen reader literal
 ;; ci/cd
 ;; undo
 (def start-position-default "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
