@@ -4,7 +4,6 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid rook move
 ;; valid king move
 ;; valid en passant
 ;; valid castle kingside
@@ -116,7 +115,9 @@
 (def ^:private unoccupied? (comp not occupied?))
 
 (defn- apply-move!
-  [{:keys [board move side-to-move halfmove-clock fullmove-number] :as _opts}]
+  [{:keys [board move side-to-move halfmove-clock fullmove-number
+           allow-white-queenside-castle? allow-white-kingside-castle?
+           allow-black-queenside-castle? allow-black-kingside-castle?] :as _opts}]
   {:pre [(some? board)
          (some? move)
          (some? side-to-move)
@@ -130,12 +131,38 @@
         next-move-number (if (= next-player white)
                            (inc fullmove-number)
                            fullmove-number)
+        update-castling-rights (fn [s]
+                                 (if (= (piece-name piece-from) :rook)
+                                   (cond
+                                     (and (= side-to-move :white)
+                                          (= from "a1")
+                                          allow-white-queenside-castle?)
+                                     (o/insert s ::white ::allow-queenside-castle? false)
+
+                                     (and (= side-to-move :white)
+                                          (= from "h1")
+                                          allow-white-kingside-castle?)
+                                     (o/insert s ::white ::allow-kingside-castle? false)
+
+                                     (and (= side-to-move :black)
+                                          (= from "a8")
+                                          allow-black-queenside-castle?)
+                                     (o/insert s ::black ::allow-queenside-castle? false)
+
+                                     (and (= side-to-move :black)
+                                          (= from "h8")
+                                          allow-black-kingside-castle?)
+                                     (o/insert s ::black ::allow-kingside-castle? false)
+                                     :else
+                                     s)
+                                   s))
         halfmove-clock (cond
                          (= :pawn (piece-name piece-from)) 0
                          ;; capture
                          (or (white-pieces piece-to) (black-pieces piece-to)) 0
                          :else (inc halfmove-clock))]
     (-> o/*session*
+        (update-castling-rights)
         (o/insert ::board ::state (-> board
                                       vec
                                       (assoc (square->idx from) \-)
@@ -397,6 +424,10 @@
      [::board ::state board {:then false}]
      [::player ::turn side-to-move {:then false}]
      [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::white ::allow-queenside-castle? allow-white-queenside-castle? {:then false}]
+     [::white ::allow-kingside-castle? allow-white-kingside-castle? {:then false}]
+     [::black ::allow-queenside-castle? allow-black-queenside-castle? {:then false}]
+     [::black ::allow-kingside-castle? allow-black-kingside-castle? {:then false}]
      [::move ::number fullmove-number {:then false}]
      [::move ::rook move]
 
