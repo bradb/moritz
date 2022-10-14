@@ -308,13 +308,25 @@
     (is (= start-pos (mc/fen)) "can't move off the board")))
 
 (deftest white-queen-rook-move-removes-castling-rights-test
-  (is false))
+  (let [start-pos "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/R1BQKB1R w KQkq - 4 3"]
+    (mc/start-game! start-pos)
+    (mc/move! "a1b1")
+    (is (= "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/1RBQKB1R b Kkq - 5 3" (mc/fen)))))
 
 (deftest black-queen-rook-move-removes-castling-rights-test
-  (is false))
+  (let [start-pos "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/R1BQKB1R w KQkq - 4 3"]
+    (mc/start-game! start-pos)
+    (mc/move! "e2e3" "a8b8")
+    (is (= "1rbqkb1r/pppppppp/2n2n2/8/8/2N1PN2/PPPP1PPP/R1BQKB1R w KQk - 1 4" (mc/fen)))))
 
 (deftest white-king-rook-move-removes-castling-rights-test
-  (is false))
+  (let [start-pos "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/R1BQKB1R w KQkq - 4 3"]
+    (mc/start-game! start-pos)
+    (mc/move! "h1g1")
+    (is (= "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/R1BQKBR1 b Qkq - 5 3" (mc/fen)))))
 
 (deftest black-king-rook-move-removes-castling-rights-test
-  (is false))
+  (let [start-pos "r1bqkb1r/pppppppp/2n2n2/8/8/2N2N2/PPPPPPPP/R1BQKB1R w KQkq - 4 3"]
+    (mc/start-game! start-pos)
+    (mc/move! "e2e3" "h8g8")
+    (is (= "r1bqkbr1/pppppppp/2n2n2/8/8/2N1PN2/PPPP1PPP/R1BQKB1R w KQq - 1 4" (mc/fen)))))
