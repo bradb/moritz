@@ -133,30 +133,25 @@
                            (inc fullmove-number)
                            fullmove-number)
         update-castling-rights (fn [s]
-                                 (if (= (piece-name piece-from) :rook)
-                                   (cond
-                                     (and (= side-to-move :white)
-                                          (= from "a1")
-                                          allow-white-queenside-castle?)
-                                     (o/insert s ::white ::allow-queenside-castle? false)
+                                 (let [pn (piece-name piece-from)]
+                                   (case [side-to-move pn from]
+                                     [:white :rook "a1"]
+                                     (when allow-white-queenside-castle?
+                                       (o/insert s ::white ::allow-queenside-castle? false))
 
-                                     (and (= side-to-move :white)
-                                          (= from "h1")
-                                          allow-white-kingside-castle?)
-                                     (o/insert s ::white ::allow-kingside-castle? false)
+                                     [:white :rook "h1"]
+                                     (when allow-white-kingside-castle?
+                                       (o/insert s ::white ::allow-kingside-castle? false))
 
-                                     (and (= side-to-move :black)
-                                          (= from "a8")
-                                          allow-black-queenside-castle?)
-                                     (o/insert s ::black ::allow-queenside-castle? false)
+                                     [:black :rook "a8"]
+                                     (when allow-black-queenside-castle?
+                                       (o/insert s ::black ::allow-queenside-castle? false))
 
-                                     (and (= side-to-move :black)
-                                          (= from "h8")
-                                          allow-black-kingside-castle?)
-                                     (o/insert s ::black ::allow-kingside-castle? false)
-                                     :else
-                                     s)
-                                   s))
+                                     [:black :rook "h8"]
+                                     (when allow-black-kingside-castle?
+                                       (o/insert s ::black ::allow-kingside-castle? false))
+
+                                     s)))
         halfmove-clock (cond
                          (= :pawn (piece-name piece-from)) 0
                          ;; capture
