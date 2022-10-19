@@ -125,6 +125,7 @@
          (and (some? halfmove-clock) (<= 0 halfmove-clock))]}
   (let [[from to] (move->from-to move)
         piece-from (square->piece board from)
+        piece-from-name (piece-name piece-from)
         piece-to (square->piece board to)
         next-player (if (= white side-to-move)
                       black
@@ -133,36 +134,54 @@
                            (inc fullmove-number)
                            fullmove-number)
         update-castling-rights (fn [s]
-                                 (let [pn (piece-name piece-from)]
-                                   (case [side-to-move pn from]
-                                     [:white :rook "a1"]
-                                     (when allow-white-queenside-castle?
-                                       (o/insert s ::white ::allow-queenside-castle? false))
+                                 (case [side-to-move piece-from-name from]
+                                   [:white :rook "a1"]
+                                   (when allow-white-queenside-castle?
+                                     (o/insert s ::white ::allow-queenside-castle? false))
 
-                                     [:white :rook "h1"]
-                                     (when allow-white-kingside-castle?
-                                       (o/insert s ::white ::allow-kingside-castle? false))
+                                   [:white :rook "h1"]
+                                   (when allow-white-kingside-castle?
+                                     (o/insert s ::white ::allow-kingside-castle? false))
 
-                                     [:black :rook "a8"]
-                                     (when allow-black-queenside-castle?
-                                       (o/insert s ::black ::allow-queenside-castle? false))
+                                   [:black :rook "a8"]
+                                   (when allow-black-queenside-castle?
+                                     (o/insert s ::black ::allow-queenside-castle? false))
 
-                                     [:black :rook "h8"]
-                                     (when allow-black-kingside-castle?
-                                       (o/insert s ::black ::allow-kingside-castle? false))
+                                   [:black :rook "h8"]
+                                   (when allow-black-kingside-castle?
+                                     (o/insert s ::black ::allow-kingside-castle? false))
 
-                                     s)))
+                                   [:white :king "e1"]
+                                   (if (contains? #{"g1"} to)
+                                     (-> s
+                                         (o/insert ::white ::allow-kingside-castle? false)
+                                         (o/insert ::white ::allow-queenside-castle? false))
+                                     s)
+
+                                   s))
         halfmove-clock (cond
                          (= :pawn (piece-name piece-from)) 0
                          ;; capture
                          (or (white-pieces piece-to) (black-pieces piece-to)) 0
-                         :else (inc halfmove-clock))]
+                         :else (inc halfmove-clock))
+        apply-mv (fn apply-mv [b]
+                   (case [side-to-move piece-from-name from to]
+                     [:white :king "e1" "g1"]
+                     (-> b
+                         vec
+                         (assoc (square->idx from) \-)
+                         (assoc (square->idx to) piece-from)
+                         (assoc (square->idx "h1") \-)
+                         (assoc (square->idx "f1") \R))
+
+                     (-> b
+                         vec
+                         (assoc (square->idx from) \-)
+                         (assoc (square->idx to) piece-from))
+                     ))]
     (-> o/*session*
         (update-castling-rights)
-        (o/insert ::board ::state (-> board
-                                      vec
-                                      (assoc (square->idx from) \-)
-                                      (assoc (square->idx to) piece-from)))
+        (o/insert ::board ::state (apply-mv board))
         (o/insert ::game ::halfmove-clock halfmove-clock)
         (o/insert ::move ::number next-move-number)
         (o/insert ::player ::turn next-player)
@@ -280,7 +299,7 @@
     (contains? (set allowed-squares) to)))
 
 (defn- allow-king-move?
-  [{:keys [board side-to-move move]}]
+  [{:keys [board side-to-move move allow-white-kingside-castle?] :as opts}]
   (let [[from to] (move->from-to move)
         valid-tos (for [f [north east south west north-east north-west south-east south-west]
                         :let [possible-to (f from)
@@ -290,6 +309,10 @@
                                    (or (nil? piece)
                                        (not= (colour piece) side-to-move)))]
                     possible-to)
+        valid-tos (if (and allow-white-kingside-castle?
+                           (every? (partial unoccupied? board) ["f1" "g1"]))
+                    (conj valid-tos "g1")
+                    valid-tos)
         valid-tos (set valid-tos)]
     (contains? valid-tos to)))
 
@@ -467,11 +490,15 @@
      [::board ::state board {:then false}]
      [::player ::turn side-to-move {:then false}]
      [::game ::halfmove-clock halfmove-clock {:then false}]
+     [::white ::allow-queenside-castle? allow-white-queenside-castle? {:then false}]
+     [::white ::allow-kingside-castle? allow-white-kingside-castle? {:then false}]
+     [::black ::allow-queenside-castle? allow-black-queenside-castle? {:then false}]
+     [::black ::allow-kingside-castle? allow-black-kingside-castle? {:then false}]
      [::move ::number fullmove-number {:then false}]
      [::move ::king move]
 
      :when
-     (allow-king-move? {:board board, :side-to-move side-to-move, :move move})
+     (allow-king-move? {:board board, :side-to-move side-to-move, :move move, :allow-white-kingside-castle? allow-white-kingside-castle?})
 
      :then
      (apply-move! o/*match*)]}))

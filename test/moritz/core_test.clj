@@ -384,7 +384,11 @@
     (is (= start-pos (mc/fen)) "can't move off the board")))
 
 (deftest king-can-castle-kingside-test
-  (is false))
+  (let [start-pos "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
+        expected "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4"]
+    (mc/start-game! start-pos)
+    (mc/move! "e1g1")
+    (is (= expected (mc/fen)))))
 
 (deftest king-can-castle-queenside-test
   (is false))
