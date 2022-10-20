@@ -391,7 +391,11 @@
     (is (= expected (mc/fen)))))
 
 (deftest king-can-castle-queenside-test
-  (is false))
+  (let [start-pos "r1bqk2r/ppppbppp/2n1pn2/8/3P1B2/2N5/PPPQPPPP/R3KBNR w KQkq - 6 5"
+        expected "r1bqk2r/ppppbppp/2n1pn2/8/3P1B2/2N5/PPPQPPPP/2KR1BNR b kq - 7 5"]
+    (mc/start-game! start-pos)
+    (mc/move! "e1c1")
+    (is (= expected (mc/fen)))))
 
 (deftest king-cant-castle-kingside-test
   (is false))

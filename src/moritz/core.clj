@@ -5,10 +5,8 @@
 
 ;; TODO:
 ;; valid king move
-;; - single square
-;; - valid castle kingside
-;; - valid castle queenside
-;; - prevent castling if not allowed
+;; - prevent castling kingside if not allowed
+;; - prevent castling queenside if not allowed
 ;; don't allow moving into check
 ;; don't allow moving across check when castling
 ;; don't allow moving out of check when castling
@@ -152,7 +150,7 @@
                                      (o/insert s ::black ::allow-kingside-castle? false))
 
                                    [:white :king "e1"]
-                                   (if (contains? #{"g1"} to)
+                                   (if (contains? #{"g1" "c1"} to)
                                      (-> s
                                          (o/insert ::white ::allow-kingside-castle? false)
                                          (o/insert ::white ::allow-queenside-castle? false))
@@ -173,6 +171,14 @@
                          (assoc (square->idx to) piece-from)
                          (assoc (square->idx "h1") \-)
                          (assoc (square->idx "f1") \R))
+
+                     [:white :king "e1" "c1"]
+                     (-> b
+                         vec
+                         (assoc (square->idx from) \-)
+                         (assoc (square->idx to) piece-from)
+                         (assoc (square->idx "a1") \-)
+                         (assoc (square->idx "d1") \R))
 
                      (-> b
                          vec
@@ -299,7 +305,7 @@
     (contains? (set allowed-squares) to)))
 
 (defn- allow-king-move?
-  [{:keys [board side-to-move move allow-white-kingside-castle?] :as opts}]
+  [{:keys [board side-to-move move allow-white-kingside-castle? allow-white-queenside-castle?] :as opts}]
   (let [[from to] (move->from-to move)
         valid-tos (for [f [north east south west north-east north-west south-east south-west]
                         :let [possible-to (f from)
@@ -312,6 +318,10 @@
         valid-tos (if (and allow-white-kingside-castle?
                            (every? (partial unoccupied? board) ["f1" "g1"]))
                     (conj valid-tos "g1")
+                    valid-tos)
+        valid-tos (if (and allow-white-queenside-castle?
+                           (every? (partial unoccupied? board) ["d1" "c1" "b1"]))
+                    (conj valid-tos "c1")
                     valid-tos)
         valid-tos (set valid-tos)]
     (contains? valid-tos to)))
@@ -498,7 +508,11 @@
      [::move ::king move]
 
      :when
-     (allow-king-move? {:board board, :side-to-move side-to-move, :move move, :allow-white-kingside-castle? allow-white-kingside-castle?})
+     (allow-king-move? {:board board
+                        :side-to-move side-to-move
+                        :move move
+                        :allow-white-kingside-castle? allow-white-kingside-castle?
+                        :allow-white-queenside-castle? allow-white-queenside-castle?})
 
      :then
      (apply-move! o/*match*)]}))
