@@ -383,28 +383,54 @@
     (mc/move! "d3d9")
     (is (= start-pos (mc/fen)) "can't move off the board")))
 
-(deftest king-can-castle-kingside-test
+(deftest white-king-can-castle-kingside-test
   (let [start-pos "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
         expected "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4"]
     (mc/start-game! start-pos)
     (mc/move! "e1g1")
     (is (= expected (mc/fen)))))
 
-(deftest king-can-castle-queenside-test
+(deftest white-king-can-castle-queenside-test
   (let [start-pos "r1bqk2r/ppppbppp/2n1pn2/8/3P1B2/2N5/PPPQPPPP/R3KBNR w KQkq - 6 5"
         expected "r1bqk2r/ppppbppp/2n1pn2/8/3P1B2/2N5/PPPQPPPP/2KR1BNR b kq - 7 5"]
     (mc/start-game! start-pos)
     (mc/move! "e1c1")
     (is (= expected (mc/fen)))))
 
-(deftest king-cant-castle-kingside-test
+(deftest black-king-can-castle-kingside-test
+  (let [start-pos "rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4"
+        expected "rnbq1rk1/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 w - - 6 5"]
+    (mc/start-game! start-pos)
+    (mc/move! "e8g8")
+    (is (= expected (mc/fen)))))
+
+(deftest black-king-can-castle-queenside-test
+  (let [start-pos "r3kbnr/pppqpppp/2n5/3p1b2/3P1B2/2N1PN2/PPP2PPP/R2QKB1R b KQkq - 0 5"
+        expected "2kr1bnr/pppqpppp/2n5/3p1b2/3P1B2/2N1PN2/PPP2PPP/R2QKB1R w KQ - 1 6"]
+    (mc/start-game! start-pos)
+    (mc/move! "e8c8")
+    (is (= expected (mc/fen)))))
+
+(deftest white-king-cant-castle-kingside-test
   (is false))
 
-(deftest king-cant-castle-queenside-test
+(deftest white-king-cant-castle-queenside-test
   (is false))
 
-(deftest king-cant-castle-through-check-test
+(deftest white-king-cant-castle-through-check-test
   (is false))
 
-(deftest king-cant-castle-out-of-check-test
+(deftest white-king-cant-castle-out-of-check-test
+  (is false))
+
+(deftest black-king-cant-castle-kingside-test
+  (is false))
+
+(deftest black-king-cant-castle-queenside-test
+  (is false))
+
+(deftest black-king-cant-castle-through-check-test
+  (is false))
+
+(deftest black-king-cant-castle-out-of-check-test
   (is false))

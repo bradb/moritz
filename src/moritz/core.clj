@@ -156,6 +156,13 @@
                                          (o/insert ::white ::allow-queenside-castle? false))
                                      s)
 
+                                   [:black :king "e8"]
+                                   (if (contains? #{"g8" "c8"} to)
+                                     (-> s
+                                         (o/insert ::black ::allow-kingside-castle? false)
+                                         (o/insert ::black ::allow-queenside-castle? false))
+                                     s)
+
                                    s))
         halfmove-clock (cond
                          (= :pawn (piece-name piece-from)) 0
@@ -179,6 +186,22 @@
                          (assoc (square->idx to) piece-from)
                          (assoc (square->idx "a1") \-)
                          (assoc (square->idx "d1") \R))
+
+                     [:black :king "e8" "g8"]
+                     (-> b
+                         vec
+                         (assoc (square->idx from) \-)
+                         (assoc (square->idx to) piece-from)
+                         (assoc (square->idx "h8") \-)
+                         (assoc (square->idx "f8") \r))
+
+                     [:black :king "e8" "c8"]
+                     (-> b
+                         vec
+                         (assoc (square->idx from) \-)
+                         (assoc (square->idx to) piece-from)
+                         (assoc (square->idx "a8") \-)
+                         (assoc (square->idx "d8") \r))
 
                      (-> b
                          vec
@@ -305,7 +328,13 @@
     (contains? (set allowed-squares) to)))
 
 (defn- allow-king-move?
-  [{:keys [board side-to-move move allow-white-kingside-castle? allow-white-queenside-castle?] :as opts}]
+  [{:keys [board
+           side-to-move
+           move
+           allow-white-kingside-castle?
+           allow-white-queenside-castle?
+           allow-black-kingside-castle?
+           allow-black-queenside-castle?] :as opts}]
   (let [[from to] (move->from-to move)
         valid-tos (for [f [north east south west north-east north-west south-east south-west]
                         :let [possible-to (f from)
@@ -322,6 +351,14 @@
         valid-tos (if (and allow-white-queenside-castle?
                            (every? (partial unoccupied? board) ["d1" "c1" "b1"]))
                     (conj valid-tos "c1")
+                    valid-tos)
+        valid-tos (if (and allow-black-kingside-castle?
+                           (every? (partial unoccupied? board) ["f8" "g8"]))
+                    (conj valid-tos "g8")
+                    valid-tos)
+        valid-tos (if (and allow-black-queenside-castle?
+                           (every? (partial unoccupied? board) ["d8" "c8" "b8"]))
+                    (conj valid-tos "c8")
                     valid-tos)
         valid-tos (set valid-tos)]
     (contains? valid-tos to)))
@@ -511,6 +548,8 @@
      (allow-king-move? {:board board
                         :side-to-move side-to-move
                         :move move
+                        :allow-black-kingside-castle? allow-black-kingside-castle?
+                        :allow-black-queenside-castle? allow-black-queenside-castle?
                         :allow-white-kingside-castle? allow-white-kingside-castle?
                         :allow-white-queenside-castle? allow-white-queenside-castle?})
 
