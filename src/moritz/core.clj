@@ -206,8 +206,7 @@
                      (-> b
                          vec
                          (assoc (square->idx from) \-)
-                         (assoc (square->idx to) piece-from))
-                     ))]
+                         (assoc (square->idx to) piece-from))))]
     (-> o/*session*
         (update-castling-rights)
         (o/insert ::board ::state (apply-mv board))

@@ -412,10 +412,16 @@
     (is (= expected (mc/fen)))))
 
 (deftest white-king-cant-castle-kingside-test
-  (is false))
+  (let [start-pos "rnbq1rk1/ppp2ppp/3p1n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w Q - 0 6"]
+    (mc/start-game! start-pos)
+    (mc/move! "e1g1")
+    (is (= start-pos (mc/fen)))))
 
 (deftest white-king-cant-castle-queenside-test
-  (is false))
+  (let [start-pos "r2qkb1r/pp1n1ppp/2p1pn2/3p1b2/3P1B2/2N5/PPPQPPPP/R3KBNR w Kkq - 4 7"]
+    (mc/start-game! start-pos)
+    (mc/move! "e1c1")
+    (is (= start-pos (mc/fen)))))
 
 (deftest white-king-cant-castle-through-check-test
   (is false))
@@ -424,10 +430,16 @@
   (is false))
 
 (deftest black-king-cant-castle-kingside-test
-  (is false))
+  (let [start-pos "rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 b q - 0 6"]
+    (mc/start-game! start-pos)
+    (mc/move! "e8g8")
+    (is (= start-pos (mc/fen)))))
 
 (deftest black-king-cant-castle-queenside-test
-  (is false))
+  (let [start-pos "r3kbnr/pppqpppp/2n5/3p1b2/3P1B2/2NBPN2/PPP2PPP/R2Q1RK1 b k - 4 7"]
+    (mc/start-game! start-pos)
+    (mc/move! "e8c8")
+    (is (= start-pos (mc/fen)))))
 
 (deftest black-king-cant-castle-through-check-test
   (is false))
