@@ -316,6 +316,32 @@
                                          :slide-fns slide-fns})]
     (set threat-sqs)))
 
+(defmethod threat-squares :knight
+  [{:keys [board from]}]
+  (when-let [piece-colour (-> board (square->piece from) colour)]
+    (let [west-2 #(west % 2)
+          east-2 #(east % 2)
+          north-2 #(north % 2)
+          south-2 #(south % 2)
+
+          move-fns #{(comp west-2 north)
+                     (comp west-2 south)
+                     (comp east-2 north)
+                     (comp east-2 south)
+                     (comp north-2 east)
+                     (comp north-2 west)
+                     (comp south-2 east)
+                     (comp south-2 west)}
+
+          allowed-squares (for [f move-fns
+                                :let [square (f from)
+                                      piece (when square (square->piece board square))]
+                                :when (and square
+                                           (or (nil? piece)
+                                               (not= (colour piece) piece-colour)))]
+                            square)]
+      (set allowed-squares))))
+
 (defmethod threat-squares :pawn
   [{:keys [board from]}]
   "pawn stuff here")
@@ -336,30 +362,9 @@
     (contains? possible-squares to)))
 
 (defn- allow-knight-move?
-  [{:keys [board side-to-move move]}]
-  (let [[from to] (move->from-to move)
-        west-2 #(west % 2)
-        east-2 #(east % 2)
-        north-2 #(north % 2)
-        south-2 #(south % 2)
-
-        move-fns #{(comp west-2 north)
-                   (comp west-2 south)
-                   (comp east-2 north)
-                   (comp east-2 south)
-                   (comp north-2 east)
-                   (comp north-2 west)
-                   (comp south-2 east)
-                   (comp south-2 west)}
-
-        allowed-squares (for [f move-fns
-                              :let [square (f from)
-                                    piece (when square (square->piece board square))]
-                              :when (and square
-                                         (or (nil? piece)
-                                             (not= (colour piece) side-to-move)))]
-                          square)]
-    (contains? (set allowed-squares) to)))
+  [{:keys [board move]}]
+  (let [[from to] (move->from-to move)]
+    (contains? (threat-squares {:board board, :from from}) to)))
 
 (defn- allow-king-move?
   [{:keys [board
