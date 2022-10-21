@@ -4,13 +4,11 @@
             [fen.core :as fen]))
 
 ;; TODO:
-;; valid king move
-;; - prevent castling kingside if not allowed
-;; - prevent castling queenside if not allowed
 ;; don't allow moving into check
 ;; don't allow moving across check when castling
 ;; don't allow moving out of check when castling
 ;; valid en passant
+;; promotion
 ;; recognise checkmate
 ;; recognise stalemate
 ;; generate random legal move
@@ -362,13 +360,40 @@
         valid-tos (set valid-tos)]
     (contains? valid-tos to)))
 
+(defmulti ^:private threat-squares
+  (fn from->piece-name
+    [{:keys [board from]}]
+    (-> (square->piece board from)
+        piece-name)))
+
+(defmethod threat-squares :rook
+  [{:keys [board from]}]
+  (when-let [piece-colour (-> board
+                              (square->piece from)
+                              colour)]
+    (let [threat-sqs (valid-slide-squares {:board board
+                                           :side-to-move piece-colour
+                                           :from from
+                                           :slide-fns [north east south west]})]
+      (set threat-sqs))))
+
+(defmethod threat-squares :pawn
+  [{:keys [board from]}]
+  "pawn stuff here")
+
+(defmethod threat-squares :default
+  [& opts]
+  #{})
+
+(comment
+  (let [{:fen/keys [board]} (fen/fen->map "8/3k4/4p3/r7/8/4R3/2K5/8 w - - 0 1")]
+    (threat-squares {:board board, :from "e3"}))
+  )
+
 (defn- allow-rook-move?
-  [{:keys [board side-to-move move]}]
+  [{:keys [board move]}]
   (let [[from to] (move->from-to move)
-        allowed-squares (valid-slide-squares {:board board
-                                              :side-to-move side-to-move
-                                              :from from
-                                              :slide-fns [north east south west]})]
+        allowed-squares (threat-squares {:board board, :from from})]
     (contains? allowed-squares to)))
 
 (defn- record-history!

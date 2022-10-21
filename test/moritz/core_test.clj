@@ -446,3 +446,9 @@
 
 (deftest black-king-cant-castle-out-of-check-test
   (is false))
+
+(deftest white-king-cant-castle-into-check-test
+  (let [start-pos "rnbqkb1r/pppp1ppp/8/4p3/2B1P3/3P1NPn/PPP2P1P/RNBQK2R w KQkq - 1 6"]
+    (mc/start-game! start-pos)
+    (mc/move! "e1g1")
+    (is (= start-pos (mc/fen)))))
