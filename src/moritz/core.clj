@@ -304,6 +304,18 @@
                            pos-squares)))]
       (-> threat-sqs flatten set))))
 
+(defmethod threat-squares :queen
+  [{:keys [board from]}]
+  (let [slide-fns [north east south west north-east north-west south-east south-west]
+        piece-colour (-> board
+                         (square->piece from)
+                         colour)
+        threat-sqs (valid-slide-squares {:board board
+                                         :side-to-move piece-colour
+                                         :from from
+                                         :slide-fns slide-fns})]
+    (set threat-sqs)))
+
 (defmethod threat-squares :pawn
   [{:keys [board from]}]
   "pawn stuff here")
@@ -312,20 +324,10 @@
   [& opts]
   #{})
 
-(comment
-  (let [{:fen/keys [board]} (fen/fen->map "8/3k4/4p3/r7/8/4R3/2K5/8 w - - 0 1")]
-    (threat-squares {:board board, :from "e3"}))
-  )
-
 (defn- allow-queen-move?
-  [{:keys [board side-to-move move]}]
-  (let [[from to] (move->from-to move)
-        slide-fns [north east south west north-east north-west south-east south-west]
-        valid-squares (valid-slide-squares {:board board
-                                            :side-to-move side-to-move
-                                            :from from
-                                            :slide-fns slide-fns})]
-    (contains? valid-squares to)))
+  [{:keys [board move]}]
+  (let [[from to] (move->from-to move)]
+    (contains? (threat-squares {:board board, :from from}) to)))
 
 (defn- allow-bishop-move?
   [{:keys [board move]}]
