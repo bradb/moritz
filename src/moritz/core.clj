@@ -291,17 +291,18 @@
   (when-let [piece-colour (-> board
                               (square->piece from)
                               colour)]
-    (for [f [north-west north-east south-west south-east]]
-      (loop [sq (f from)
-             pos-squares []]
-        (if (some? sq)
-          (if-some [piece (square->piece board sq)]
-            (if (= (colour piece) piece-colour)
-              pos-squares
-              (conj pos-squares sq))
-            (recur (f sq)
-                   (conj pos-squares sq)))
-          pos-squares)))))
+    (let [threat-sqs (for [f [north-west north-east south-west south-east]]
+                       (loop [sq (f from)
+                              pos-squares []]
+                         (if (some? sq)
+                           (if-some [piece (square->piece board sq)]
+                             (if (= (colour piece) piece-colour)
+                               pos-squares
+                               (conj pos-squares sq))
+                             (recur (f sq)
+                                    (conj pos-squares sq)))
+                           pos-squares)))]
+      (-> threat-sqs flatten set))))
 
 (defmethod threat-squares :pawn
   [{:keys [board from]}]
@@ -329,10 +330,7 @@
 (defn- allow-bishop-move?
   [{:keys [board move]}]
   (let [[start to] (move->from-to move)
-        possible-squares (threat-squares {:board board, :from start})
-        possible-squares (-> possible-squares
-                             flatten
-                             set)]
+        possible-squares (threat-squares {:board board, :from start})]
     (contains? possible-squares to)))
 
 (defn- allow-knight-move?
